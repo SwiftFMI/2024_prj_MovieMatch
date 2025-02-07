@@ -8,5 +8,10 @@
 import SwiftUI
 
 struct Style {
-    static let appBackground = LinearGradient(gradient: Gradient(colors: [Color(red: 0.5, green: 0, blue: 0), Color(red: 0, green: 0, blue: 0.5)]), startPoint: .leading, endPoint: .trailing)
+    static let appGradient = RadialGradient(
+        gradient: Gradient(colors: [Color(red: 0, green: 0, blue: 0.5),
+                                    Color(red: 0.5, green: 0, blue: 0)]),
+        center: .topLeading,
+        startRadius: 60,
+        endRadius: 800)
 }
