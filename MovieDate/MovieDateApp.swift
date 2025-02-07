@@ -9,7 +9,7 @@ struct MovieDateApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppView()
         }
     }
 }
