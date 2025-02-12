@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct LoginView: View {
+struct SignInView: View {
     @EnvironmentObject private var auth: AuthService
     @State private var email: String = "";
     @State private var password: String = "";
@@ -83,5 +83,5 @@ struct LoginView: View {
 }
 
 #Preview {
-    LoginView()
+    SignInView()
 }

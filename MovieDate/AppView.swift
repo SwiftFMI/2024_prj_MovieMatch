@@ -13,7 +13,7 @@ struct AppView: View {
     var body: some View {
         if auth.user == nil {
             NavigationStack {
-                LoginView()
+                SignInView()
             }
         } else {
             ContentView()
