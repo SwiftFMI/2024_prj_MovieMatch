@@ -8,9 +8,15 @@
 import SwiftUI
 
 struct SignUpView: View {
+    @EnvironmentObject private var auth: AuthService
     @State private var name: String = "";
     @State private var email: String = "";
     @State private var password: String = "";
+
+    private func signUp() async throws {
+        guard !email.isEmpty && !password.isEmpty else { return }
+        try await auth.signUp(email: email, password: password)
+    }
 
     var body: some View {
         ZStack {
@@ -30,6 +36,8 @@ struct SignUpView: View {
                     .padding(.vertical, 10)
 
                 TextField("Email", text: $email)
+                    .textInputAutocapitalization(.never)
+                    .disableAutocorrection(true)
                     .padding()
                     .background(.white.opacity(0.7))
                     .cornerRadius(10)
@@ -44,7 +52,13 @@ struct SignUpView: View {
                     .padding(.vertical, 10)
 
                 Button(action: {
-                    
+                    Task {
+                        do {
+                            try await signUp()
+                        } catch {
+                            print(error.localizedDescription)
+                        }
+                    }
                 }){
                     Text("Sign Up")
                         .padding()

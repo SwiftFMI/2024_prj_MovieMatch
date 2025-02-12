@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct ContentView: View {
+    @EnvironmentObject private var auth: AuthService
+
     var body: some View {
         ZStack {
             Style.appGradient
@@ -16,8 +18,22 @@ struct ContentView: View {
                 Image(systemName: "globe")
                     .imageScale(.large)
                     .foregroundStyle(.tint)
-                Text("Hello, world!")
-                    .foregroundStyle(.white)
+
+                if let user = auth.user {
+                    Text("Hello, \(user.email)")
+                        .foregroundStyle(.white)
+                }
+
+                Button(action: {
+                    do {
+                        try auth.signOut()
+                    } catch {
+                        print(error.localizedDescription)
+                    }
+                }) {
+                    Text("Logout")
+                }
+                .buttonStyle(.borderedProminent)
             }
             .padding()
         }
@@ -26,4 +42,5 @@ struct ContentView: View {
 
 #Preview {
     ContentView()
+        .environmentObject(AuthService.preview)
 }

@@ -9,7 +9,7 @@ import SwiftUI
 
 struct JoinView: View {
     @State private var code: String = "";
-    
+
     var body: some View {
         ZStack {
             Style.appGradient
@@ -43,7 +43,7 @@ struct JoinView: View {
                         .padding(.vertical, 10)
                 }
                 .padding(.top, 20)
-                
+
                 Divider()
                     .frame(minHeight: 2)
                     .overlay(.white.opacity(0.5))
@@ -54,7 +54,7 @@ struct JoinView: View {
                     .font(.largeTitle)
                     .foregroundStyle(.white)
                     .fontWeight(.bold)
-                
+
                 Text("D546F8")
                     .font(.title)
                     .foregroundStyle(.white.opacity(0.7))

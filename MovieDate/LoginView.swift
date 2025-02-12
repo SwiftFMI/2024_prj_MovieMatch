@@ -8,9 +8,15 @@
 import SwiftUI
 
 struct LoginView: View {
+    @EnvironmentObject private var auth: AuthService
     @State private var email: String = "";
     @State private var password: String = "";
-    
+
+    private func signIn() async throws {
+        guard !email.isEmpty && !password.isEmpty else { return }
+        try await auth.signIn(email: email, password: password)
+    }
+
     var body: some View {
         ZStack {
             Style.appGradient
@@ -27,12 +33,14 @@ struct LoginView: View {
                     .padding(.bottom, 60)
 
                 TextField("Email", text: $email)
+                    .textInputAutocapitalization(.never)
+                    .disableAutocorrection(true)
                     .padding()
                     .background(.white.opacity(0.7))
                     .cornerRadius(10)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 10)
-                
+
                 SecureField("Password", text: $password)
                     .padding()
                     .background(.white.opacity(0.7))
@@ -41,7 +49,13 @@ struct LoginView: View {
                     .padding(.vertical, 10)
 
                 Button(action: {
-                    
+                    Task {
+                        do {
+                            try await signIn()
+                        } catch {
+                            print(error.localizedDescription)
+                        }
+                    }
                 }){
                     Text("Login")
                         .padding()

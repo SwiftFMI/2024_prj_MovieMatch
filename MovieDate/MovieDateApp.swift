@@ -3,6 +3,8 @@ import FirebaseCore
 
 @main
 struct MovieDateApp: App {
+    @StateObject var auth = AuthService()
+    
     init() {
         FirebaseApp.configure()
     }
@@ -11,5 +13,6 @@ struct MovieDateApp: App {
         WindowGroup {
             AppView()
         }
+        .environmentObject(auth)
     }
 }
