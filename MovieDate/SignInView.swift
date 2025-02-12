@@ -12,9 +12,15 @@ struct SignInView: View {
     @State private var email: String = "";
     @State private var password: String = "";
 
-    private func signIn() async throws {
+    private func signIn() {
         guard !email.isEmpty && !password.isEmpty else { return }
-        try await auth.signIn(email: email, password: password)
+        Task {
+            do {
+                try await auth.signIn(email: email, password: password)
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
     }
 
     var body: some View {
@@ -33,6 +39,7 @@ struct SignInView: View {
                     .padding(.bottom, 60)
 
                 TextField("Email", text: $email)
+                    .submitLabel(.next)
                     .textInputAutocapitalization(.never)
                     .disableAutocorrection(true)
                     .padding()
@@ -42,21 +49,15 @@ struct SignInView: View {
                     .padding(.vertical, 10)
 
                 SecureField("Password", text: $password)
+                    .submitLabel(.go)
+                    .onSubmit(signIn)
                     .padding()
                     .background(.white.opacity(0.7))
                     .cornerRadius(10)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 10)
 
-                Button(action: {
-                    Task {
-                        do {
-                            try await signIn()
-                        } catch {
-                            print(error.localizedDescription)
-                        }
-                    }
-                }){
+                Button(action: signIn){
                     Text("Login")
                         .padding()
                         .padding(.horizontal, 20)

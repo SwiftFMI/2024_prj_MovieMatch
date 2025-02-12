@@ -13,9 +13,15 @@ struct SignUpView: View {
     @State private var email: String = "";
     @State private var password: String = "";
 
-    private func signUp() async throws {
+    private func signUp() {
         guard !email.isEmpty && !password.isEmpty else { return }
-        try await auth.signUp(email: email, password: password)
+        Task {
+            do {
+                try await auth.signUp(email: email, password: password)
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
     }
 
     var body: some View {
@@ -45,21 +51,15 @@ struct SignUpView: View {
                     .padding(.vertical, 10)
                 
                 SecureField("Password", text: $password)
+                    .submitLabel(.go)
+                    .onSubmit(signUp)
                     .padding()
                     .background(.white.opacity(0.7))
                     .cornerRadius(10)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 10)
 
-                Button(action: {
-                    Task {
-                        do {
-                            try await signUp()
-                        } catch {
-                            print(error.localizedDescription)
-                        }
-                    }
-                }){
+                Button(action: signUp){
                     Text("Sign Up")
                         .padding()
                         .padding(.horizontal, 20)
