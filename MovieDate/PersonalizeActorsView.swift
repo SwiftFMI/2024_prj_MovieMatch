@@ -18,4 +18,5 @@ struct PersonalizeActorsView: View {
 
 #Preview {
     PersonalizeActorsView()
+        .environmentObject(AuthService.preview)
 }

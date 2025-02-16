@@ -40,6 +40,28 @@ struct Genre: Codable, Identifiable {
     }
 }
 
+struct ProviderResponse: Codable {
+    let results: [Provider]
+}
+
+struct Provider: Codable, Identifiable {
+    let id: Int
+    let name: String
+    let display_priority: Int
+    let logo_path: String
+
+    enum CodingKeys: String, CodingKey {
+        case id = "provider_id"
+        case name = "provider_name"
+        case display_priority
+        case logo_path
+    }
+    
+    var logoUrl: URL {
+        return URL(string: "https://image.tmdb.org/t/p/w92\(logo_path)")!
+    }
+}
+
 struct MovieResponse: Codable{
     let results: [Movie]
 }
@@ -70,6 +92,13 @@ class MovieService {
     func getGenres() async throws -> [Genre] {
         let data = try await fetch("/3/genre/movie/list")
         return try JSONDecoder().decode(GenreResponse.self, from: data).genres
+    }
+
+    func getProviders() async throws -> [Provider] {
+        let query = [URLQueryItem(name: "watch_region", value: "BG")]
+        let data = try await fetch("/3/watch/providers/movie", query: query)
+        let providers = try JSONDecoder().decode(ProviderResponse.self, from: data).results
+        return providers.sorted(by: { $0.display_priority < $1.display_priority })
     }
 
     private func fetch(_ endpoint: String, query: [URLQueryItem] = [], lang: String = "en") async throws -> Data {

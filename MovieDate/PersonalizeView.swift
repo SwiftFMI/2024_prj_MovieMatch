@@ -56,12 +56,10 @@ struct PersonalizeView: View {
                 Spacer()
             }
         }
-        .onAppear{
-            fetchPopularMovies()
-        }
+        .onAppear(perform: fetchPopularMovies)
     }
-    
-    func fetchPopularMovies() {
+
+    private func fetchPopularMovies() {
         Task {
             do {
                 let movies = try await movieSvc.getPopularMovies()

@@ -15,6 +15,7 @@ struct User: Codable {
     let name: String
     let setupDone: Bool
     let selectedGenres: [Int]
+    let selectedProviders: [Int]
 
     enum CodingKeys: CodingKey {
         case uid
@@ -22,14 +23,19 @@ struct User: Codable {
         case name
         case setupDone
         case selectedGenres
+        case selectedProviders
     }
 
-    init(uid: String, email: String, name: String, setupDone: Bool = false, selectedGenres: [Int] = []) {
+    init(uid: String, email: String, name: String,
+         setupDone: Bool = false,
+         selectedGenres: [Int] = [],
+         selectedProviders: [Int] = []) {
         self.uid = uid
         self.email = email
         self.name = name
         self.setupDone = setupDone
         self.selectedGenres = selectedGenres
+        self.selectedProviders = selectedProviders
     }
 }
 
@@ -71,12 +77,12 @@ class AuthService: ObservableObject {
         try Auth.auth().signOut()
     }
 
-    func updateUserGenre(uid: String, genre: Int, isSelected: Bool) {
+    func updateUserSelect(uid: String, key: User.CodingKeys, id: Int, isSelected: Bool) {
         let val = isSelected
-            ? FieldValue.arrayUnion([genre])
-            : FieldValue.arrayRemove([genre])
+            ? FieldValue.arrayUnion([id])
+            : FieldValue.arrayRemove([id])
         userDocument(uid)
-            .updateData([User.CodingKeys.selectedGenres.stringValue: val])
+            .updateData([key.stringValue: val])
     }
 
     private func userDocument(_ uid: String) -> DocumentReference {

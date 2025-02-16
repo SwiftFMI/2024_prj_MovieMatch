@@ -19,7 +19,7 @@ struct PersonalizeGenresView: View {
                 .ignoresSafeArea()
             
             VStack {
-                ProgressView(value: 0.3)
+                ProgressView(value: 1.0/3)
                     .progressViewStyle(LinearProgressViewStyle())
                     .frame(width: 150)
                     .padding(.top, 20)
@@ -36,8 +36,9 @@ struct PersonalizeGenresView: View {
                         ForEach(genres) { genre in
                             if let user = auth.user {
                                 let isSelected = user.selectedGenres.contains(genre.id) == true
-                                GenreButton(icon: genre.icon, text: genre.name, isSelected: isSelected) {
-                                    auth.updateUserGenre(uid: user.uid, genre: genre.id, isSelected: !isSelected)
+                                let icon = Text(genre.icon).font(.title)
+                                SelectableButton(icon: icon, text: genre.name, isSelected: isSelected) {
+                                    auth.updateUserSelect(uid: user.uid, key: .selectedGenres, id: genre.id, isSelected: !isSelected)
                                 }
                             }
                         }
@@ -78,31 +79,7 @@ struct PersonalizeGenresView: View {
     }
 }
 
-struct GenreButton: View {
-    let icon: String
-    let text: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                Text(icon)
-                    .font(.title)
-                Text(text)
-                    .font(.headline)
-                    .foregroundColor(.white)
-                Spacer()
-            }
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(isSelected ? Color.white.opacity(0.7) : Color.white.opacity(0.2))
-            .cornerRadius(12)
-        }
-        .padding(.horizontal, 20)
-    }
-}
-
 #Preview {
     PersonalizeGenresView()
+        .environmentObject(AuthService.preview)
 }
