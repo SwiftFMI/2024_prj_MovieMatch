@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct MoviesGenresView: View {
+    private let movieSvc = MovieService()
+
     @State private var selectedGenres: [Int] = []
     @State private var genres: [Genre] = []
 
@@ -88,25 +90,15 @@ struct MoviesGenresView: View {
     }
     
     func fetchGenres() {
-        let apiKey = "e13c8c80bb7b14cf140adb8aa6dd234d"
-        let urlString = "https://api.themoviedb.org/3/genre/movie/list?api_key=\(apiKey)&language=en-US"
-        
-        guard let url = URL(string: urlString) else { return }
-        
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            if let data = data {
-                do {
-                    let decodedResponse = try JSONDecoder().decode(GenreResponse.self, from: data)
-                    DispatchQueue.main.async {
-                        self.genres = decodedResponse.genres
-                    }
-                } catch {
-                    print("Error decoding JSON: \(error)")
-                }
+        Task {
+            do {
+                self.genres = try await movieSvc.getGenres()
+            } catch {
+                print(error.localizedDescription)
             }
-        }.resume()
+        }
     }
-    
+
     private func toggleGenre(_ genreId: Int) {
         if selectedGenres.contains(genreId) {
             selectedGenres.removeAll { $0 == genreId }
@@ -114,15 +106,6 @@ struct MoviesGenresView: View {
             selectedGenres.append(genreId)
         }
     }
-}
-
-struct Genre: Codable, Identifiable {
-    let id: Int
-    let name: String
-}
-
-struct GenreResponse: Codable {
-    let genres: [Genre]
 }
 
 struct GenreButton: View {

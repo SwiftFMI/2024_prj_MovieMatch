@@ -8,13 +8,24 @@
 import SwiftUI
 
 struct AppView: View {
+    @EnvironmentObject private var auth: AuthService
+
     var body: some View {
-        NavigationStack {
-            LoginView()
+        if let user = auth.user {
+            if user.setupDone {
+                ContentView()
+            } else {
+                // UserSetupView()
+            }
+        } else {
+            NavigationStack {
+                SignInView()
+            }
         }
     }
 }
 
 #Preview {
     AppView()
+        .environmentObject(AuthService.preview)
 }

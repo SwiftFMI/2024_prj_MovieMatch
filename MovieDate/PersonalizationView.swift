@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct PersonalizationView: View {
+    private let movieSvc = MovieService()
     @State private var movies: [Movie] = []
     
     var body: some View {
@@ -61,45 +62,14 @@ struct PersonalizationView: View {
     }
     
     func fetchPopularMovies() {
-        let apiKey = "e13c8c80bb7b14cf140adb8aa6dd234d"
-        let urlString = "https://api.themoviedb.org/3/movie/popular?api_key=\(apiKey)&language=en-US&page=1"
-        
-        guard let url = URL(string: urlString) else { return }
-        
-        URLSession.shared.dataTask(with: url) { data, _, error in
-            if let data = data {
-                do {
-                    let decodedResponse = try JSONDecoder().decode(MovieResponse.self, from: data)
-                    DispatchQueue.main.async {
-                        self.movies = Array(decodedResponse.results.prefix(10))
-                    }
-                } catch {
-                    print("Error decoding JSON: \(error)")
-                }
+        Task {
+            do {
+                let movies = try await movieSvc.getPopularMovies()
+                self.movies = Array(movies.prefix(10))
+            } catch {
+                print(error.localizedDescription)
             }
-        }.resume()
-    }
-}
-
-struct MovieResponse: Codable{
-    let results: [Movie]
-}
-
-struct Movie: Codable, Identifiable {
-    let id: Int
-    let title: String
-    let posterPath: String?
-    
-    enum CodingKeys: String, CodingKey {
-        case id, title
-        case posterPath = "poster_path" // Указваме правилното име от JSON
-    }
-    
-    var posterURL: URL? {
-        if let path = posterPath {
-            return URL(string: "https://image.tmdb.org/t/p/w500\(path)")
         }
-        return nil
     }
 }
 

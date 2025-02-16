@@ -7,10 +7,22 @@
 
 import SwiftUI
 
-struct LoginView: View {
+struct SignInView: View {
+    @EnvironmentObject private var auth: AuthService
     @State private var email: String = "";
     @State private var password: String = "";
-    
+
+    private func signIn() {
+        guard !email.isEmpty && !password.isEmpty else { return }
+        Task {
+            do {
+                try await auth.signIn(email: email, password: password)
+            } catch {
+                print(error.localizedDescription)
+            }
+        }
+    }
+
     var body: some View {
         ZStack {
             Style.appGradient
@@ -27,22 +39,25 @@ struct LoginView: View {
                     .padding(.bottom, 60)
 
                 TextField("Email", text: $email)
-                    .padding()
-                    .background(.white.opacity(0.7))
-                    .cornerRadius(10)
-                    .padding(.horizontal, 30)
-                    .padding(.vertical, 10)
-                
-                SecureField("Password", text: $password)
+                    .submitLabel(.next)
+                    .textInputAutocapitalization(.never)
+                    .disableAutocorrection(true)
                     .padding()
                     .background(.white.opacity(0.7))
                     .cornerRadius(10)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 10)
 
-                Button(action: {
-                    
-                }){
+                SecureField("Password", text: $password)
+                    .submitLabel(.go)
+                    .onSubmit(signIn)
+                    .padding()
+                    .background(.white.opacity(0.7))
+                    .cornerRadius(10)
+                    .padding(.horizontal, 30)
+                    .padding(.vertical, 10)
+
+                Button(action: signIn){
                     Text("Login")
                         .padding()
                         .padding(.horizontal, 20)
@@ -69,5 +84,5 @@ struct LoginView: View {
 }
 
 #Preview {
-    LoginView()
+    SignInView()
 }
