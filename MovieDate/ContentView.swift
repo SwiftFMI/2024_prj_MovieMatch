@@ -20,8 +20,10 @@ struct ContentView: View {
                     .foregroundStyle(.tint)
 
                 if let user = auth.user {
-                    Text("Hello, \(user.email)")
+                    Text("Hello, \(user.name)")
                         .foregroundStyle(.white)
+                } else {
+                    ProgressView()
                 }
 
                 Button(action: {

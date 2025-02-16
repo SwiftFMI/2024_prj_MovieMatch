@@ -11,12 +11,16 @@ struct AppView: View {
     @EnvironmentObject private var auth: AuthService
 
     var body: some View {
-        if auth.user == nil {
+        if let user = auth.user {
+            if user.setupDone {
+                ContentView()
+            } else {
+                // UserSetupView()
+            }
+        } else {
             NavigationStack {
                 SignInView()
             }
-        } else {
-            ContentView()
         }
     }
 }

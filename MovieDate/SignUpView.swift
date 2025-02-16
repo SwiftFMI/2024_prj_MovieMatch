@@ -14,10 +14,10 @@ struct SignUpView: View {
     @State private var password: String = "";
 
     private func signUp() {
-        guard !email.isEmpty && !password.isEmpty else { return }
+        guard !email.isEmpty && !password.isEmpty && !name.isEmpty else { return }
         Task {
             do {
-                try await auth.signUp(email: email, password: password)
+                try await auth.signUp(name: name, email: email, password: password)
             } catch {
                 print(error.localizedDescription)
             }
