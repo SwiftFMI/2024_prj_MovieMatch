@@ -15,7 +15,9 @@ struct AppView: View {
             if user.setupDone {
                 ContentView()
             } else {
-                // UserSetupView()
+                NavigationStack {
+                    PersonalizeView()
+                }
             }
         } else {
             NavigationStack {

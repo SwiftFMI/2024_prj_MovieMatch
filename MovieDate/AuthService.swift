@@ -14,6 +14,23 @@ struct User: Codable {
     let email: String
     let name: String
     let setupDone: Bool
+    let selectedGenres: [Int]
+
+    enum CodingKeys: CodingKey {
+        case uid
+        case email
+        case name
+        case setupDone
+        case selectedGenres
+    }
+
+    init(uid: String, email: String, name: String, setupDone: Bool = false, selectedGenres: [Int] = []) {
+        self.uid = uid
+        self.email = email
+        self.name = name
+        self.setupDone = setupDone
+        self.selectedGenres = selectedGenres
+    }
 }
 
 @MainActor
@@ -23,7 +40,7 @@ class AuthService: ObservableObject {
     private var authListener: AuthStateDidChangeListenerHandle?
     private var dbListener: ListenerRegistration?
     
-    static let preview = AuthService(user: nil)
+    static let preview = AuthService(user: User(uid: "1", email: "joe@example.com", name: "Joe"))
 
     private init(user: User?) {
         self.user = user
@@ -46,21 +63,31 @@ class AuthService: ObservableObject {
 
     func signUp(name: String, email: String, password: String) async throws {
         let res = try await Auth.auth().createUser(withEmail: email, password: password)
-        try Firestore.firestore()
-            .collection("users")
-            .document(res.user.uid)
-            .setData(from: User(uid: res.user.uid, email: res.user.email!, name: name, setupDone: false))
+        try userDocument(res.user.uid)
+            .setData(from: User(uid: res.user.uid, email: res.user.email!, name: name))
     }
 
     func signOut() throws {
         try Auth.auth().signOut()
     }
 
-    private func listenDbUser(uid: String) {
-        dbListener?.remove()
-        dbListener = Firestore.firestore()
+    func updateUserGenre(uid: String, genre: Int, isSelected: Bool) {
+        let val = isSelected
+            ? FieldValue.arrayUnion([genre])
+            : FieldValue.arrayRemove([genre])
+        userDocument(uid)
+            .updateData([User.CodingKeys.selectedGenres.stringValue: val])
+    }
+
+    private func userDocument(_ uid: String) -> DocumentReference {
+        return Firestore.firestore()
             .collection("users")
             .document(uid)
+    }
+
+    private func listenDbUser(uid: String) {
+        dbListener?.remove()
+        dbListener = userDocument(uid)
             .addSnapshotListener { [weak self] snapshot, error in
             guard let self else { return }
             if let error = error {

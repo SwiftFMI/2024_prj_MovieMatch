@@ -7,34 +7,12 @@
 
 import SwiftUI
 
-struct MoviesGenresView: View {
+struct PersonalizeGenresView: View {
     private let movieSvc = MovieService()
 
-    @State private var selectedGenres: [Int] = []
+    @EnvironmentObject private var auth: AuthService
     @State private var genres: [Genre] = []
 
-    let genreEmojis: [String: String] = [
-        "Romance": "💖",
-        "Drama": "🎭",
-        "Documentary": "🎥",
-        "Action": "🧨",
-        "Adventure": "🧭",
-        "Horror": "👻",
-        "Thriller": "🔪",
-        "Mystery": "🔮",
-        "Fantasy": "🦄",
-        "Science Fiction": "👽",
-        "Comedy": "😂",
-        "Family": "🏡",
-        "Animation": "🧸",
-        "Crime": "🕵🏻‍♂️",
-        "History": "🏛",
-        "Music": "🎵",
-        "TV Movie": "📺",
-        "War": "⚔️",
-        "Western": "🤠"
-    ]
-    
     var body: some View {
         ZStack {
             Style.appGradient
@@ -56,16 +34,18 @@ struct MoviesGenresView: View {
                 ScrollView {
                     VStack {
                         ForEach(genres) { genre in
-                            let emoji = genreEmojis[genre.name] ?? "🎬"
-                            GenreButton(icon: emoji, text: genre.name, isSelected: selectedGenres.contains(genre.id)) {
-                                toggleGenre(genre.id)
+                            if let user = auth.user {
+                                let isSelected = user.selectedGenres.contains(genre.id) == true
+                                GenreButton(icon: genre.icon, text: genre.name, isSelected: isSelected) {
+                                    auth.updateUserGenre(uid: user.uid, genre: genre.id, isSelected: !isSelected)
+                                }
                             }
                         }
                     }
                     .padding(.top, 10)
                 }
-                
-                NavigationLink(destination: ActorsView()) {
+
+                NavigationLink(destination: PersonalizeActorsView()) {
                     Text("Continue")
                         .padding()
                         .padding(.horizontal, 20)
@@ -84,26 +64,16 @@ struct MoviesGenresView: View {
             }
             .padding()
         }
-        .onAppear {
-            fetchGenres()
-        }
+        .onAppear(perform: fetchGenres)
     }
-    
-    func fetchGenres() {
+
+    private func fetchGenres() {
         Task {
             do {
                 self.genres = try await movieSvc.getGenres()
             } catch {
                 print(error.localizedDescription)
             }
-        }
-    }
-
-    private func toggleGenre(_ genreId: Int) {
-        if selectedGenres.contains(genreId) {
-            selectedGenres.removeAll { $0 == genreId }
-        } else {
-            selectedGenres.append(genreId)
         }
     }
 }
@@ -113,7 +83,7 @@ struct GenreButton: View {
     let text: String
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack {
@@ -134,5 +104,5 @@ struct GenreButton: View {
 }
 
 #Preview {
-    MoviesGenresView()
+    PersonalizeGenresView()
 }

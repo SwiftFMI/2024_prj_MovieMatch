@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct PersonalizationView: View {
+struct PersonalizeView: View {
     private let movieSvc = MovieService()
     @State private var movies: [Movie] = []
     
@@ -17,7 +17,7 @@ struct PersonalizationView: View {
                 .ignoresSafeArea()
             
             VStack{
-                MoviesGridView(movies: movies)
+                PersonalizeMovieGridView(movies: movies)
                     .frame(height: 250)
                     .padding(.top, 20)
                 
@@ -37,7 +37,7 @@ struct PersonalizationView: View {
                     .padding(.top, 10)
                 
                 
-                NavigationLink(destination: MoviesGenresView()) {
+                NavigationLink(destination: PersonalizeGenresView()) {
                     Text("Continue")
                         .padding()
                         .padding(.horizontal, 20)
@@ -73,7 +73,7 @@ struct PersonalizationView: View {
     }
 }
 
-struct MoviesGridView: View {
+struct PersonalizeMovieGridView: View {
     let movies: [Movie]
     
     var body: some View {
@@ -83,7 +83,7 @@ struct MoviesGridView: View {
             HStack {
                 
                 ForEach(movies.prefix(5)) { movie in
-                    MoviePosterView(movie: movie)
+                    PersonalizeMoviePosterView(movie: movie)
                         
                 }
                 .padding(.top, 40)
@@ -92,14 +92,14 @@ struct MoviesGridView: View {
             
             HStack {
                 ForEach(movies.dropFirst(5).prefix(5)) { movie in
-                    MoviePosterView(movie: movie)
+                    PersonalizeMoviePosterView(movie: movie)
                 }
             }
         }
     }
 }
 
-struct MoviePosterView: View {
+struct PersonalizeMoviePosterView: View {
     let movie: Movie
     
     var body: some View {
@@ -124,10 +124,6 @@ struct MoviePosterView: View {
     }
 }
 
-
-    
-
-
 #Preview {
-    PersonalizationView()
+    PersonalizeView()
 }

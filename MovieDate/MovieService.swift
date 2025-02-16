@@ -14,6 +14,30 @@ struct GenreResponse: Codable {
 struct Genre: Codable, Identifiable {
     let id: Int
     let name: String
+
+    var icon: String {
+        return [
+            "Romance": "💖",
+            "Drama": "🎭",
+            "Documentary": "🎥",
+            "Action": "🧨",
+            "Adventure": "🧭",
+            "Horror": "👻",
+            "Thriller": "🔪",
+            "Mystery": "🔮",
+            "Fantasy": "🦄",
+            "Science Fiction": "👽",
+            "Comedy": "😂",
+            "Family": "🏡",
+            "Animation": "🧸",
+            "Crime": "🕵🏻‍♂️",
+            "History": "🏛",
+            "Music": "🎵",
+            "TV Movie": "📺",
+            "War": "⚔️",
+            "Western": "🤠"
+        ][name] ?? "🎬"
+    }
 }
 
 struct MovieResponse: Codable{
