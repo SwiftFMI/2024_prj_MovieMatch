@@ -16,6 +16,7 @@ struct User: Codable {
     let setupDone: Bool
     let selectedGenres: [Int]
     let selectedProviders: [Int]
+    let selectedActors: [Int]
 
     enum CodingKeys: CodingKey {
         case uid
@@ -24,18 +25,21 @@ struct User: Codable {
         case setupDone
         case selectedGenres
         case selectedProviders
+        case selectedActors
     }
 
     init(uid: String, email: String, name: String,
          setupDone: Bool = false,
          selectedGenres: [Int] = [],
-         selectedProviders: [Int] = []) {
+         selectedProviders: [Int] = [],
+         selectedActors: [Int] = []) {
         self.uid = uid
         self.email = email
         self.name = name
         self.setupDone = setupDone
         self.selectedGenres = selectedGenres
         self.selectedProviders = selectedProviders
+        self.selectedActors = selectedActors
     }
 }
 

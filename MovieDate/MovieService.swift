@@ -79,6 +79,15 @@ struct Movie: Codable, Identifiable {
     }
 }
 
+struct Actor: Identifiable, Codable {
+    let id: Int
+    let name: String
+}
+
+struct ActorResponse: Codable {
+    let results: [Actor]
+}
+
 class MovieService {
     private let host = "https://api.themoviedb.org"
     private let apiKey = "e13c8c80bb7b14cf140adb8aa6dd234d"
@@ -99,6 +108,12 @@ class MovieService {
         let data = try await fetch("/3/watch/providers/movie", query: query)
         let providers = try JSONDecoder().decode(ProviderResponse.self, from: data).results
         return providers.sorted(by: { $0.display_priority < $1.display_priority })
+    }
+    
+    func getActors(query: String) async throws -> [Actor] {
+        let query = [URLQueryItem(name: "query", value: query)]
+        let data = try await fetch("/3/search/person", query: query)
+        return try JSONDecoder().decode(ActorResponse.self, from: data).results
     }
 
     private func fetch(_ endpoint: String, query: [URLQueryItem] = [], lang: String = "en") async throws -> Data {
