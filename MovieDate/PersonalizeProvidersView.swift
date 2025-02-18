@@ -11,7 +11,7 @@ struct PersonalizeProvidersView: View {
     private let movieSvc = MovieService()
 
     @EnvironmentObject private var auth: AuthService
-    @State private var providers: [Provider] = []
+    @State private var providers: [WatchProvider] = []
 
     var body: some View {
         ZStack {
