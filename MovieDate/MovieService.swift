@@ -79,19 +79,27 @@ struct Movie: Codable, Identifiable {
     }
 }
 
-struct Actor: Identifiable, Codable {
+struct Person: Identifiable, Codable {
     let id: Int
     let name: String
+    let popularity: Double
 }
 
-struct ActorResponse: Codable {
-    let results: [Actor]
+struct PersonResponse: Codable {
+    let results: [Person]
 }
 
 class MovieService {
     private let host = "https://api.themoviedb.org"
     private let apiKey = "e13c8c80bb7b14cf140adb8aa6dd234d"
     private let apiReadToken = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlMTNjOGM4MGJiN2IxNGNmMTQwYWRiOGFhNmRkMjM0ZCIsIm5iZiI6MTczNDYwNzg5OS45NjUsInN1YiI6IjY3NjQwNDFiZTE0ZTNiY2ZhNzRhNGEzNCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.wkdU83BIfm5cmiVbgkn_7red1z2Q1sZEeY8sHflqzKU"
+    private let session: URLSession
+
+    init() {
+        let sessionConfig = URLSessionConfiguration.default
+        sessionConfig.requestCachePolicy = .returnCacheDataElseLoad
+        self.session = URLSession(configuration: sessionConfig)
+    }
 
     func getPopularMovies() async throws -> [Movie] {
         let data = try await fetch("/3/movie/popular");
@@ -106,14 +114,22 @@ class MovieService {
     func getProviders() async throws -> [Provider] {
         let query = [URLQueryItem(name: "watch_region", value: "BG")]
         let data = try await fetch("/3/watch/providers/movie", query: query)
-        let providers = try JSONDecoder().decode(ProviderResponse.self, from: data).results
-        return providers.sorted(by: { $0.display_priority < $1.display_priority })
+        let results = try JSONDecoder().decode(ProviderResponse.self, from: data).results
+        return results.sorted(by: { $0.display_priority < $1.display_priority })
     }
-    
-    func getActors(query: String) async throws -> [Actor] {
+
+    func getPerson(id: Int) async throws -> Person {
+        let data = try await fetch("/3/person/\(id)")
+        return try JSONDecoder().decode(Person.self, from: data)
+    }
+
+    func searchPeople(query: String) async throws -> [Person] {
         let query = [URLQueryItem(name: "query", value: query)]
         let data = try await fetch("/3/search/person", query: query)
-        return try JSONDecoder().decode(ActorResponse.self, from: data).results
+        let results = try JSONDecoder().decode(PersonResponse.self, from: data).results
+        return results
+            .filter({ $0.popularity > 1 })
+            .sorted(by: { $0.popularity > $1.popularity })
     }
 
     private func fetch(_ endpoint: String, query: [URLQueryItem] = [], lang: String = "en") async throws -> Data {
@@ -132,8 +148,12 @@ class MovieService {
           "Authorization": "Bearer \(apiReadToken)",
         ]
 
-        let (data, _) = try await URLSession.shared.data(for: request)
-        print(String(decoding: data, as: UTF8.self))
+        if let cachedResponse = URLCache.shared.cachedResponse(for: request) {
+            return cachedResponse.data
+        }
+
+        let (data, _) = try await self.session.data(for: request)
+        print("Fetched \(endpoint)")
         return data
     }
 }

@@ -5,26 +5,26 @@
 //  Created by Darina Baneva on 13.02.25.
 //
 
-//
-//  ActorsView.swift
-//  MovieDate
-//
-//  Created by Darina Baneva on 13.02.25.
-//
-
 import SwiftUI
 
 struct PersonalizeActorsView: View {
     private let movieSvc = MovieService()
-    
-    @State private var searchText: String = ""
-    @State private var selectedActors: [String] = []
-    @State private var searchResults: [Actor] = []
 
-    let exampleActors: [String] = [
-        "Leonardo DiCaprio", "Johnny Depp", "Antonio Banderas",
-        "Anthony Hopkins", "Angelina Jolie", "Julia Roberts",
-        "Margot Robbie", "Cameron Diaz", "Jennifer Aniston"
+    @EnvironmentObject private var auth: AuthService
+    @State private var searchText: String = ""
+    @State private var searchResults: [Person] = []
+    @State private var selectedActors: [Person] = []
+
+    private let exampleActors: [Int] = [
+        6193, //"Leonardo DiCaprio",
+        85, //"Johnny Depp",
+        3131, // "Antonio Banderas",
+        4173, //"Anthony Hopkins",
+        11701, //"Angelina Jolie",
+        1204, //"Julia Roberts",
+        234352, //"Margot Robbie",
+        6941, //"Cameron Diaz",
+        4491, //"Jennifer Aniston",
     ]
 
     var body: some View {
@@ -33,7 +33,7 @@ struct PersonalizeActorsView: View {
                 .ignoresSafeArea()
 
             VStack {
-                ProgressView(value: 0.5)
+                ProgressView(value: 2.0/3)
                     .progressViewStyle(LinearProgressViewStyle())
                     .frame(width: 150)
                     .tint(.red)
@@ -50,9 +50,7 @@ struct PersonalizeActorsView: View {
                         .foregroundColor(.gray)
                     TextField("", text: $searchText)
                         .foregroundColor(.white)
-                        .onChange(of: searchText) { newValue in
-                            fetchActors()
-                        }
+                        .onChange(of: searchText, fetchSearch)
                 }
                 .padding()
                 .background(Color.white.opacity(0.2))
@@ -62,22 +60,19 @@ struct PersonalizeActorsView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
-                        if !searchText.isEmpty {
-                            ForEach(searchResults, id: \.id) { actor in
-                                Text(actor.name)
-                                    .foregroundColor(.white)
-                                    .padding()
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(Color.white.opacity(0.2))
-                                    .cornerRadius(12)
-                                    .onTapGesture {
-                                        selectActor(actor.name)
+                        let actors = !searchText.isEmpty
+                            ? searchResults
+                            : selectedActors
+
+                        ForEach(actors) { actor in
+                            if let user = auth.user {
+                                let isSelected = user.selectedActors.contains(actor.id) == true
+                                SelectableButton(icon: EmptyView(), text: actor.name, isSelected: isSelected) {
+                                    auth.updateUserSelect(uid: user.uid, key: .selectedActors, id: actor.id, isSelected: !isSelected)
+                                    if !searchText.isEmpty {
+                                        searchText = ""
+                                        searchResults = []
                                     }
-                            }
-                        } else {
-                            ForEach(exampleActors + selectedActors, id: \.self) { actor in
-                                ActorButton(text: actor, isSelected: selectedActors.contains(actor)) {
-                                    toggleActor(actor)
                                 }
                             }
                         }
@@ -106,58 +101,41 @@ struct PersonalizeActorsView: View {
             }
             .padding()
         }
+        .onAppear(perform: fetchActors)
+        .onChange(of: auth.user?.selectedActors, fetchActors)
     }
 
     private func fetchActors() {
+        let selected = self.auth.user?.selectedActors ?? []
+        let ids = exampleActors + selected.filter{ !exampleActors.contains($0) }
+        Task {
+            await withTaskGroup(of: (Int, Person?).self) { group in
+                for (i, id) in ids.enumerated() {
+                    group.addTask {
+                        return (i, try? await movieSvc.getPerson(id: id))
+                    }
+                }
+                var results: [Person?] = Array(repeating: nil, count: ids.count)
+                for await (i, res) in group {
+                    results[i] = res
+                }
+                self.selectedActors = results.compactMap{ $0 }
+            }
+        }
+    }
+
+    private func fetchSearch() {
         guard !searchText.isEmpty else {
             searchResults = []
             return
         }
         Task{
             do {
-                self.searchResults = try await movieSvc.getActors(query: searchText)
+                self.searchResults = try await movieSvc.searchPeople(query: searchText)
             } catch {
                 print(error.localizedDescription)
             }
         }
-    }
-
-    private func selectActor(_ actor: String) {
-        if !selectedActors.contains(actor) {
-            selectedActors.append(actor)
-        }
-        searchText = ""
-        searchResults = []
-    }
-
-    private func toggleActor(_ actor: String) {
-        if selectedActors.contains(actor) {
-            selectedActors.removeAll { $0 == actor }
-        } else {
-            selectedActors.append(actor)
-        }
-    }
-}
-
-struct ActorButton: View {
-    let text: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                Text(text)
-                    .font(.headline)
-                    .foregroundColor(.white)
-                Spacer()
-            }
-            .padding()
-            .frame(maxWidth: .infinity)
-            .background(isSelected ? Color.white.opacity(0.5) : Color.white.opacity(0.2))
-            .cornerRadius(12)
-        }
-        .padding(.horizontal, 20)
     }
 }
 
