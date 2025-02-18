@@ -70,6 +70,7 @@ struct Movie: Codable, Identifiable {
     let id: Int
     let title: String
     let poster_path: String?
+    let genre_ids: [Int]    //
 
     var posterURL: URL? {
         if let path = poster_path {
