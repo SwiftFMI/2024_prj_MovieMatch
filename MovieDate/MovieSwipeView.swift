@@ -151,27 +151,87 @@ struct MovieCardView: View {
     
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            MovieImageView(posterURL: movie.posterURL)
-                .frame(width: 300, height: 500)
-                .cornerRadius(20)
-                .overlay(
-                    VStack(alignment: .leading) {
-                        Text(movie.title)
-                            .font(.title2)
+            ScrollView {
+                MovieImageView(posterURL: movie.posterURL)
+                    .frame(width: 300, height: 500)
+                    .cornerRadius(20)
+                    .overlay(
+                        VStack(alignment: .leading) {
+                            GenreTagView(genreIds: movie.genre_ids, genres: genres)
+                        }
+                        .padding()
+                        .background(Color.black.opacity(0.4))
+                        .cornerRadius(20)
+                        .padding(.leading)
+                        .padding(.bottom, 30),
+                        alignment: .bottomLeading
+                    )
+                
+                VStack {
+                    Text(movie.title)
+                        .font(.title2)
+                        .bold()
+                        .foregroundStyle(.white)
+                        .padding(.top, 5)
+                    
+                    Text("Overview: ")
+                        .font(.title3)
+                        .bold()
+                        .foregroundStyle(.white)
+                        .padding(.top, 10)
+                    
+                    Text(movie.overview!)
+                        .font(.body)
+                        .padding()
+                        .foregroundStyle(.white)
+                        //.padding(.top, 10)
+                    
+                    HStack {
+                        Text("Release date: ")
+                            .font(.title3)
                             .bold()
                             .foregroundStyle(.white)
+                            .padding(.leading, 15)
                         
-                        GenreTagView(genreIds: movie.genre_ids, genres: genres)
+                        Text(movie.release_date!)
+                            .font(.body)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    
+                    HStack {
+                        Text("Actors: ")
+                            .padding(.top, 10)
+                            .font(.title3)
+                            .bold()
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.leading, 15)
                         
                         
                     }
-                    .padding()
-                    .background(Color.black.opacity(0.4))
-                    .cornerRadius(20)
-                    .padding(.leading)
-                    .padding(.bottom, 30),
-                    alignment: .bottomLeading
-                )
+                    
+                    HStack {
+                        Text("Platforms: ")
+                            .padding(.top, 10)
+                            .font(.title3)
+                            .bold()
+                            .foregroundStyle(.white)
+                            .padding(.leading, 15)
+                        
+                        Text(movie.platforms?.map { $0.name }.joined(separator: ", ") ?? "No platforms available")
+                            .padding(.top, 10)
+                            .font(.body)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                    }
+                    
+                }
+                .frame(width: 300)
+                .background(Color.black.opacity(0.8))
+                .cornerRadius(20)
+            }
         }
     }
 }
