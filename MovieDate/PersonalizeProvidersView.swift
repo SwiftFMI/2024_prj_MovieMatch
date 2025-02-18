@@ -47,7 +47,7 @@ struct PersonalizeProvidersView: View {
                                         .frame(width: 40, height: 40)
                                 }
                                 SelectableButton(icon: icon, text: provider.name, isSelected: isSelected) {
-                                    auth.updateUserSelect(uid: user.uid, key: .selectedProviders, id: provider.id, isSelected: !isSelected)
+                                    auth.updateUserSelect(key: .selectedProviders, id: provider.id, isSelected: !isSelected)
                                 }
                             }
                         }
@@ -55,8 +55,8 @@ struct PersonalizeProvidersView: View {
                     .padding(.top, 10)
                 }
 
-                NavigationLink(destination: EmptyView()) {
-                    Text("Continue")
+                Button(action: finishPersonalize) {
+                    Text("Finish")
                         .padding()
                         .padding(.horizontal, 20)
                         .foregroundColor(.white)
@@ -85,6 +85,10 @@ struct PersonalizeProvidersView: View {
                 print(error.localizedDescription)
             }
         }
+    }
+    
+    private func finishPersonalize() {
+        auth.setPersonalizeDone(value: true)
     }
 }
 

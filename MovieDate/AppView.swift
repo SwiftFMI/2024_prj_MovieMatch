@@ -12,12 +12,14 @@ struct AppView: View {
 
     var body: some View {
         if let user = auth.user {
-            if user.setupDone {
-                ContentView()
-            } else {
+            if !user.personalizeDone {
                 NavigationStack {
                     PersonalizeView()
                 }
+            } else if auth.mutualPartner == nil {
+                PartnerJoinView()
+            } else {
+                ContentView()
             }
         } else {
             NavigationStack {

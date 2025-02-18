@@ -1,5 +1,5 @@
 //
-//  JoinView.swift
+//  PartnerJoinView.swift
 //  MovieDate
 //
 //  Created by Darina Baneva on 8.02.25.
@@ -7,8 +7,9 @@
 
 import SwiftUI
 
-struct JoinView: View {
-    @State private var code: String = "";
+struct PartnerJoinView: View {
+    @EnvironmentObject private var auth: AuthService
+    @State private var name: String = "";
 
     var body: some View {
         ZStack {
@@ -20,7 +21,8 @@ struct JoinView: View {
                     .foregroundStyle(.white)
                     .fontWeight(.bold)
                 
-                TextField("Partner code", text: $code)
+                TextField("Partner Name", text: $name)
+                    .autocorrectionDisabled()
                     .padding()
                     .background(.white.opacity(0.7))
                     .cornerRadius(10)
@@ -28,9 +30,9 @@ struct JoinView: View {
                     .padding(.vertical, 10)
 
                 Button(action: {
-                    
+                    auth.trySetPartner(name: name)
                 }){
-                    Text("Confirm")
+                    Text("Send Invite")
                         .padding()
                         .padding(.horizontal, 20)
                         .foregroundColor(.white)
@@ -50,21 +52,36 @@ struct JoinView: View {
                     .padding()
                     .padding(.vertical, 40)
 
-                Text("Your Code")
+                Text("Your Invites")
                     .font(.largeTitle)
                     .foregroundStyle(.white)
                     .fontWeight(.bold)
+                
+                if let user = auth.user {
+                    Text(user.name)
+                        .font(.title)
+                        .foregroundStyle(.white.opacity(0.7))
+                        .fontWeight(.bold)
+                }
 
-                Text("D546F8")
-                    .font(.title)
-                    .foregroundStyle(.white.opacity(0.7))
-                    .fontWeight(.bold)
-                    .padding()
+                if auth.pendingPartners.isEmpty {
+                    ProgressView()
+                        .colorScheme(.dark)
+                        .padding()
+
+                } else {
+                    ForEach(auth.pendingPartners) { partner in
+                        SelectableButton(text: partner.name) {
+                            auth.setPartner(uid: partner.uid)
+                        }
+                    }
+                }
             }
         }
     }
 }
 
 #Preview {
-    JoinView()
+    PartnerJoinView()
+        .environmentObject(AuthService.preview)
 }

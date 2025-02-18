@@ -8,8 +8,8 @@
 
 import SwiftUI
 
-struct SelectableButton<V: View>: View {
-    let icon: V
+struct SelectableButton<Icon: View>: View {
+    let icon: Icon
     let text: String
     let isSelected: Bool
     let action: () -> Void
@@ -29,5 +29,11 @@ struct SelectableButton<V: View>: View {
             .cornerRadius(12)
         }
         .padding(.horizontal, 20)
+    }
+}
+
+extension SelectableButton where Icon == EmptyView {
+    init(text: String, isSelected: Bool = false, action: @escaping () -> Void) {
+        self.init(icon: EmptyView(), text: text, isSelected: isSelected, action: action)
     }
 }

@@ -38,7 +38,7 @@ struct PersonalizeGenresView: View {
                                 let isSelected = user.selectedGenres.contains(genre.id) == true
                                 let icon = Text(genre.icon).font(.title)
                                 SelectableButton(icon: icon, text: genre.name, isSelected: isSelected) {
-                                    auth.updateUserSelect(uid: user.uid, key: .selectedGenres, id: genre.id, isSelected: !isSelected)
+                                    auth.updateUserSelect(key: .selectedGenres, id: genre.id, isSelected: !isSelected)
                                 }
                             }
                         }

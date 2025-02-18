@@ -67,8 +67,8 @@ struct PersonalizeActorsView: View {
                         ForEach(actors) { actor in
                             if let user = auth.user {
                                 let isSelected = user.selectedActors.contains(actor.id) == true
-                                SelectableButton(icon: EmptyView(), text: actor.name, isSelected: isSelected) {
-                                    auth.updateUserSelect(uid: user.uid, key: .selectedActors, id: actor.id, isSelected: !isSelected)
+                                SelectableButton(text: actor.name, isSelected: isSelected) {
+                                    auth.updateUserSelect(key: .selectedActors, id: actor.id, isSelected: !isSelected)
                                     if !searchText.isEmpty {
                                         searchText = ""
                                         searchResults = []
