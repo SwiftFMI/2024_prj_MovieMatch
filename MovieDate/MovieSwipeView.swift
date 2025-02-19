@@ -255,5 +255,5 @@ fileprivate struct GenreTagView: View {
 
 #Preview {
     MovieSwipeView()
-        .environmentObject(RecommendationEngine(userSvc: UserService.preview, userPartnerSvc: UserPartnerService.preview, movieSvc: MovieService()))
+        .environmentObject(PreviewCompose.recommendSvc)
 }

@@ -80,5 +80,5 @@ struct PersonalizeGenresView: View {
 
 #Preview {
     PersonalizeGenresView()
-        .environmentObject(UserService.preview)
+        .environmentObject(PreviewCompose.userSvc)
 }

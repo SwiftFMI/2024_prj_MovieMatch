@@ -140,5 +140,5 @@ struct PersonalizeActorsView: View {
 
 #Preview {
     PersonalizeActorsView()
-        .environmentObject(UserService.preview)
+        .environmentObject(PreviewCompose.userSvc)
 }

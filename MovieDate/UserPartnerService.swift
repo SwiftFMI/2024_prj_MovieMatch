@@ -17,15 +17,10 @@ class UserPartnerService: ObservableObject, UserChangeListener {
     @Published private(set) var pendingPartners: [User] = []
     var mutualPartner: User? { self.pendingPartners.first(where: { user?.partner == $0.uid }) }
 
-    static let shared: UserPartnerService = UserPartnerService()
-    static let preview: UserPartnerService = UserPartnerService(
-        user: User(uid: "1", email: "joe@e.com", name: "Joe", partner: "2"),
-        partner: User(uid: "2", email: "max@e.com", name: "Max", partner: "1"))
-
-    private init() {
+    init() {
     }
 
-    private init(user: User, partner: User) {
+    init(user: User, partner: User) {
         self.user = user
         self.pendingPartners = [partner]
     }
@@ -57,7 +52,7 @@ class UserPartnerService: ObservableObject, UserChangeListener {
         }
     }
 
-    func storeLike(movieId: Int) async throws {
+    func likeAndMatch(movieId: Int) async throws {
         guard let user = self.user, let partner = self.mutualPartner else { return }
         let userLikeRef = AppFirestore.userLikesCollection(user.uid).document(String(movieId))
         let partnerLikeRef = AppFirestore.userLikesCollection(partner.uid).document(String(movieId))

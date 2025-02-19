@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct SignUpView: View {
+    @EnvironmentObject private var authSvc: AuthService
     @EnvironmentObject private var userSvc: UserService
     @State private var name: String = "";
     @State private var email: String = "";
@@ -17,7 +18,7 @@ struct SignUpView: View {
         guard !email.isEmpty && !password.isEmpty && !name.isEmpty else { return }
         Task {
             do {
-                try await userSvc.signUp(name: name, email: email, password: password)
+                try await authSvc.signUp(name: name, email: email, password: password)
             } catch {
                 print(error.localizedDescription)
             }

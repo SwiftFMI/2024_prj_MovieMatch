@@ -15,7 +15,7 @@ protocol UserChangeListener {
 }
 
 @MainActor
-class UserService: ObservableObject {
+class UserService: ObservableObject, AuthChangeListener {
     private let changeListeners: [UserChangeListener]
 
     @Published private(set) var loaded: Bool = false
@@ -24,42 +24,25 @@ class UserService: ObservableObject {
     private var authListener: AuthStateDidChangeListenerHandle?
     private var userListener: ListenerRegistration?
 
-    static let shared = UserService(changeListeners: [UserPartnerService.shared])
-    static let preview = UserService(user: User(uid: "1", email: "joe@e.com", name: "Joe"))
-
-    private init(user: User?) {
+    init(user: User?) {
         self.user = user
         self.changeListeners = []
     }
 
-    private init(changeListeners: [UserChangeListener]) {
+    init(changeListeners: [UserChangeListener]) {
         self.changeListeners = changeListeners
-        authListener = Auth.auth().addStateDidChangeListener{ [weak self] _, user in
-            guard let self else { return }
-            self.userListener?.remove()
-            if let user = user {
-                self.userListener = userListen(uid: user.uid)
-            } else {
-                self.user = nil
-                self.userListener = nil
-                notifyListeners(user: nil)
-                loaded = true
-            }
+    }
+
+    func onAuthChange(uid: String?) {
+        self.userListener?.remove()
+        if let uid = uid {
+            self.userListener = userListen(uid: uid)
+        } else {
+            self.user = nil
+            self.userListener = nil
+            notifyListeners(user: nil)
+            loaded = true
         }
-    }
-
-    func signIn(email: String, password: String) async throws {
-        try await Auth.auth().signIn(withEmail: email, password: password)
-    }
-
-    func signUp(name: String, email: String, password: String) async throws {
-        let res = try await Auth.auth().createUser(withEmail: email, password: password)
-        try AppFirestore.userDocument(res.user.uid)
-            .setData(from: User(uid: res.user.uid, email: res.user.email!, name: name))
-    }
-
-    func signOut() throws {
-        try Auth.auth().signOut()
     }
 
     func updateUserSelect(key: User.CodingKeys, id: Int, isSelected: Bool) {

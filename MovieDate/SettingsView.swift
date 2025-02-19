@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct SettingsView: View {
+    @EnvironmentObject private var authSvc: AuthService
     @EnvironmentObject private var userSvc: UserService
 
     var body: some View {
@@ -21,7 +22,7 @@ struct SettingsView: View {
                 }
 
                 Button(action: {
-                    try? userSvc.signOut()
+                    try? authSvc.signOut()
                 }) {
                     Text("Sign Out")
                 }
@@ -34,5 +35,6 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
-        .environmentObject(UserService.preview)
+        .environmentObject(PreviewCompose.authSvc)
+        .environmentObject(PreviewCompose.userSvc)
 }

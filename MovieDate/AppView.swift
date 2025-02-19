@@ -39,6 +39,6 @@ struct AppView: View {
 
 #Preview {
     AppView()
-        .environmentObject(UserService.preview)
-        .environmentObject(UserPartnerService.preview)
+        .environmentObject(PreviewCompose.userSvc)
+        .environmentObject(PreviewCompose.userPartnerSvc)
 }

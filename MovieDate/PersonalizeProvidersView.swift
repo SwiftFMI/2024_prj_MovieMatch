@@ -93,5 +93,5 @@ struct PersonalizeProvidersView: View {
 
 #Preview {
     PersonalizeProvidersView()
-        .environmentObject(UserService.preview)
+        .environmentObject(PreviewCompose.userSvc)
 }

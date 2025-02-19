@@ -35,7 +35,7 @@ class RecommendationEngine: ObservableObject {
 
     func like(id: Int, liked: Bool) async {
         if (liked) {
-            try? await userPartnerSvc.storeLike(movieId: id)
+            try? await userPartnerSvc.likeAndMatch(movieId: id)
         }
         await pop()
     }

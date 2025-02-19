@@ -83,5 +83,5 @@ struct PartnerJoinView: View {
 
 #Preview {
     PartnerJoinView()
-        .environmentObject(UserPartnerService.preview)
+        .environmentObject(PreviewCompose.userPartnerSvc)
 }
