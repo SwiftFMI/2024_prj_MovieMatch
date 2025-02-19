@@ -3,8 +3,9 @@ import FirebaseCore
 
 @main
 struct MovieDateApp: App {
-    @StateObject var auth = AuthService()
-    
+    @StateObject var auth = AuthService.shared
+    @StateObject var engine = RecommendationEngine(auth: AuthService.shared, movieSvc: MovieService())
+
     init() {
         FirebaseApp.configure()
     }
@@ -12,7 +13,8 @@ struct MovieDateApp: App {
     var body: some Scene {
         WindowGroup {
             AppView()
+                .environmentObject(auth)
+                .environmentObject(engine)
         }
-        .environmentObject(auth)
     }
 }

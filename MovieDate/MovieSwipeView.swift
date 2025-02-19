@@ -8,10 +8,9 @@
 import SwiftUI
 
 struct MovieSwipeView: View {
-    @StateObject private var viewModel = MovieViewModel()
-    @State private var currentIndex = 0
-    @State private var currentSwipeOffset: CGFloat = 0
-    
+    @EnvironmentObject private var engine: RecommendationEngine
+    @State private var swipeOffset: Double = 0
+
     var body: some View {
         ZStack {
             Style.appGradient
@@ -19,10 +18,10 @@ struct MovieSwipeView: View {
             
             VStack {
                 Image("md-smart")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 200, height: 100)
-                            .foregroundStyle(.white)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 200, height: 100)
+                    .foregroundStyle(.white)
                 
                 HStack {
                     NavigationLink(destination: SettingsView()){
@@ -32,6 +31,7 @@ struct MovieSwipeView: View {
                             .foregroundStyle(.white)
                     }
                     .padding(.leading, 20)
+                    
                     Spacer()
                     
                     NavigationLink(destination: MatchedMoviesView()){
@@ -44,41 +44,33 @@ struct MovieSwipeView: View {
                 }
                 
                 ZStack {
-                    ForEach(Array(viewModel.movies.enumerated()), id: \ .element.id) { index, movie in
-                        if index >= currentIndex {
-                            MovieCardView(movie: movie, genres: viewModel.genres)
-                                .offset(x: index == currentIndex ? currentSwipeOffset : 0)
-                                .zIndex(Double(viewModel.movies.count - index))
-                                .gesture(
-                                    DragGesture()
-                                        .onChanged { gesture in
-                                            if index == currentIndex {
-                                                currentSwipeOffset = gesture.translation.width
-                                            }
+                    ForEach(Array(engine.queue.enumerated()), id: \.0) { i, movie in
+                        MovieCardView(movie: movie)
+                            .offset(x: i == engine.queue.count - 1 ? swipeOffset : 0)
+                            .gesture(
+                                DragGesture()
+                                    .onChanged { gesture in
+                                        swipeOffset = gesture.translation.width
+                                    }
+                                    .onEnded { gesture in
+                                        if gesture.translation.width < -50 {
+                                            dislike()
+                                        } else if gesture.translation.width > 50 {
+                                            like()
                                         }
-                                        .onEnded { gesture in
-                                            if index == currentIndex {
-                                                if gesture.translation.width < -50 {
-                                                    nextMovie(isLike: false)
-                                                } else if gesture.translation.width > 50 {
-                                                    nextMovie(isLike: true)
-                                                }
-                                                currentSwipeOffset = 0
-                                            }
-                                        }
-                                )
-                        }
+                                        swipeOffset = 0
+                                    }
+                            )
+                        
                     }
                     overlaySwipingIndicators
                         .zIndex(999999)
                 }
                 .frame(maxHeight: .infinity)
-                .animation(.smooth, value: currentSwipeOffset)
+                .animation(.smooth, value: swipeOffset)
                 
                 HStack {
-                    Button(action: {
-                        nextMovie(isLike: false)
-                    }) {
+                    Button(action: dislike) {
                         Image(systemName: "xmark.circle.fill")
                             .resizable()
                             .frame(width: 60, height: 60)
@@ -87,9 +79,7 @@ struct MovieSwipeView: View {
                     .padding(.leading, 60)
                     Spacer()
                     
-                    Button(action: {
-                        nextMovie(isLike: true)
-                    }) {
+                    Button(action: like) {
                         Image(systemName: "checkmark.circle.fill")
                             .resizable()
                             .frame(width: 60, height: 60)
@@ -100,19 +90,12 @@ struct MovieSwipeView: View {
                 .padding()
             }
             .padding()
-        }
-        .task {
-            await viewModel.loadMovies()
-        }
-    
-    }
-    
-    private func nextMovie(isLike: Bool) {
-        if currentIndex < viewModel.movies.count {
-            currentIndex += 1
+            .task {
+                await engine.fill()
+            }
         }
     }
-    
+
     private var overlaySwipingIndicators: some View {
         ZStack {
             Circle()
@@ -123,8 +106,8 @@ struct MovieSwipeView: View {
                         .fontWeight(.semibold)
                 )
                 .frame(width: 60, height: 60)
-                .scaleEffect(abs(currentSwipeOffset) > 100 ? 1.5 : 1.0)
-                .offset(x: min(-currentSwipeOffset, 150))
+                .scaleEffect(abs(swipeOffset) > 100 ? 1.5 : 1.0)
+                .offset(x: min(-swipeOffset, 150))
                 .offset(x: -130)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
@@ -136,28 +119,36 @@ struct MovieSwipeView: View {
                         .fontWeight(.semibold)
                 )
                 .frame(width: 60, height: 60)
-                .scaleEffect(abs(currentSwipeOffset) > 100 ? 1.5 : 1.0)
-                .offset(x: max(-currentSwipeOffset, -130))
+                .scaleEffect(abs(swipeOffset) > 100 ? 1.5 : 1.0)
+                .offset(x: max(-swipeOffset, -130))
                 .offset(x: 100)
                 .frame(maxWidth: .infinity, alignment: .trailing)
         }
-        .animation(.smooth, value: currentSwipeOffset)
+        .animation(.smooth, value: swipeOffset)
+    }
+
+    private func like() {
+        Task { await engine.pop() }
+        // TODO: Store in db
+    }
+
+    private func dislike() {
+        Task { await engine.pop() }
     }
 }
 
 struct MovieCardView: View {
-    let movie: Movie
-    let genres: [Genre]
-    
+    let movie: MovieDetails
+
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             ScrollView {
-                MovieImageView(posterURL: movie.posterURL)
+                MovieImageView(posterURL: movie.posterURL!)
                     .frame(width: 300, height: 500)
                     .cornerRadius(20)
                     .overlay(
                         VStack(alignment: .leading) {
-                            GenreTagView(genreIds: movie.genre_ids, genres: genres)
+                            GenreTagView(genres: movie.genres)
                         }
                         .padding()
                         .background(Color.black.opacity(0.4))
@@ -166,25 +157,24 @@ struct MovieCardView: View {
                         .padding(.bottom, 30),
                         alignment: .bottomLeading
                     )
-                
+
                 VStack {
                     Text(movie.title)
                         .font(.title2)
                         .bold()
                         .foregroundStyle(.white)
                         .padding(.top, 5)
-                    
+
                     Text("Overview: ")
                         .font(.title3)
                         .bold()
                         .foregroundStyle(.white)
                         .padding(.top, 10)
                     
-                    Text(movie.overview!)
+                    Text(movie.overview)
                         .font(.body)
                         .padding()
                         .foregroundStyle(.white)
-                        //.padding(.top, 10)
                     
                     HStack {
                         Text("Release date: ")
@@ -192,40 +182,38 @@ struct MovieCardView: View {
                             .bold()
                             .foregroundStyle(.white)
                             .padding(.leading, 15)
-                        
-                        Text(movie.release_date!)
+                        Text(movie.release_date)
                             .font(.body)
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     
                     HStack {
-                        Text("Actors: ")
+                        Text("Cast: ")
                             .padding(.top, 10)
                             .font(.title3)
                             .bold()
                             .foregroundStyle(.white)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.leading, 15)
-                        
-                        
+                        Text(movie.credits.cast.map{ $0.name }.joined(separator: ", "))
+                            .foregroundStyle(.white)
                     }
-                    
-                    HStack {
-                        Text("Platforms: ")
-                            .padding(.top, 10)
-                            .font(.title3)
-                            .bold()
-                            .foregroundStyle(.white)
-                            .padding(.leading, 15)
-                        
-                        Text(movie.platforms?.map { $0.name }.joined(separator: ", ") ?? "No platforms available")
-                            .padding(.top, 10)
-                            .font(.body)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity, alignment: .leading)
 
-                    }
+//                    HStack {
+//                        Text("Platforms: ")
+//                            .padding(.top, 10)
+//                            .font(.title3)
+//                            .bold()
+//                            .foregroundStyle(.white)
+//                            .padding(.leading, 15)
+//                        
+//                        Text(movie.platforms?.map { $0.name }.joined(separator: ", ") ?? "No platforms available")
+//                            .padding(.top, 10)
+//                            .font(.body)
+//                            .foregroundStyle(.white)
+//                            .frame(maxWidth: .infinity, alignment: .leading)
+//                    }
                     
                 }
                 .frame(width: 300)
@@ -237,69 +225,35 @@ struct MovieCardView: View {
 }
 
 
-struct MovieImageView: View {
-    let posterURL: URL?
+fileprivate struct MovieImageView: View {
+    let posterURL: URL
     
     var body: some View {
-        if let url = posterURL {
-            AsyncImage(url: url) { phase in
-                switch phase {
-                case .success(let image):
-                    image.resizable()
-                        .scaledToFit()
-                        .frame(width: 300, height: 450)
-                        .cornerRadius(20)
-                case .failure:
-                    Image(systemName: "photo")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 300, height: 450)
-                        .foregroundStyle(.gray)
-                default:
-                    ProgressView()
-                }
-            }
-        } else {
-            Image(systemName: "photo")
-                .resizable()
+        AsyncImage(url: posterURL) { image in
+            image.resizable()
                 .scaledToFit()
                 .frame(width: 300, height: 450)
-                .foregroundStyle(.gray)
+                .cornerRadius(20)
+        } placeholder: {
+            ProgressView().colorScheme(.dark)
+                .frame(width: 300, height: 450)
         }
     }
 }
 
-struct GenreTagView: View {
-    let genreIds: [Int]
+fileprivate struct GenreTagView: View {
     let genres: [Genre]
-    
+
     var body: some View {
         HStack {
-            ForEach(genreIds, id: \.self) { genreId in
-                if let genre = genres.first(where: { $0.id == genreId }) {
-                    Text("\(genre.icon) \(genre.name)")
-                        .font(.caption)
-                        .foregroundStyle(.white)
-                        .padding(2)
-                        .background(Color.black.opacity(0.5))
-                        .cornerRadius(10)
-                }
+            ForEach(genres) { genre in
+                Text("\(genre.icon) \(genre.name)")
+                    .font(.caption)
+                    .foregroundStyle(.white)
+                    .padding(2)
+                    .background(Color.black.opacity(0.5))
+                    .cornerRadius(10)
             }
-        }
-    }
-}
-
-class MovieViewModel: ObservableObject {
-    @Published var movies: [Movie] = []
-    @Published var genres: [Genre] = []
-    private let movieService = MovieService()
-    
-    func loadMovies() async {
-        do {
-            self.movies = try await movieService.getPopularMovies()
-            self.genres = try await movieService.getGenres()
-        } catch {
-            print("Error fetching movies or genres: \(error)")
         }
     }
 }

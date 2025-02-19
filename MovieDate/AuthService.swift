@@ -64,7 +64,7 @@ class AuthService: ObservableObject {
         self.user = user
     }
 
-    init() {
+    private init() {
         authListener = Auth.auth().addStateDidChangeListener{ [weak self] _, user in
             guard let self else { return }
             if let user = user {
@@ -75,6 +75,8 @@ class AuthService: ObservableObject {
             }
         }
     }
+
+    static let shared = AuthService()
 
     func signIn(email: String, password: String) async throws {
         try await Auth.auth().signIn(withEmail: email, password: password)

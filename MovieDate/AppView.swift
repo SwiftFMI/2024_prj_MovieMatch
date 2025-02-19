@@ -19,7 +19,9 @@ struct AppView: View {
             } else if auth.mutualPartner == nil {
                 PartnerJoinView()
             } else {
-                ContentView()
+                NavigationStack {
+                    MovieSwipeView()
+                }
             }
         } else {
             NavigationStack {

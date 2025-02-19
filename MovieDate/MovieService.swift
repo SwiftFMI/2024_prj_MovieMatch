@@ -57,9 +57,7 @@ struct WatchProvider: Codable, Identifiable {
         case logo_path
     }
     
-    var logoUrl: URL {
-        return URL(string: "https://image.tmdb.org/t/p/w92\(logo_path)")!
-    }
+    var logoUrl: URL { imageUrl(size: "w92", path: logo_path)! }
 }
 
 struct MovieResponse: Codable{
@@ -70,18 +68,25 @@ struct Movie: Codable, Identifiable {
     let id: Int
     let title: String
     let poster_path: String?
-    let genre_ids: [Int]    //
-    let overview: String?
-    let release_date: String?
-    var platforms: [Provider]?
-   
 
-    var posterURL: URL? {
-        if let path = poster_path {
-            return URL(string: "https://image.tmdb.org/t/p/w500\(path)")
-        }
-        return nil
-    }
+    var posterURL: URL? { imageUrl(size: "w500", path: poster_path) }
+}
+
+struct MovieDetails: Codable, Identifiable {
+    let id: Int
+    let title: String
+    let poster_path: String?
+    let overview: String
+    let release_date: String
+    let genres: [Genre]
+    let credits: MovieCredits
+
+    var posterURL: URL? { imageUrl(size: "w500", path: poster_path) }
+}
+
+struct MovieCredits: Codable {
+    let cast: [Person]
+    let crew: [Person]
 }
 
 struct Person: Identifiable, Codable {
@@ -92,6 +97,11 @@ struct Person: Identifiable, Codable {
 
 struct PersonResponse: Codable {
     let results: [Person]
+}
+
+func imageUrl(size: String, path: String?) -> URL? {
+    guard let path = path else { return nil }
+    return URL(string: "https://image.tmdb.org/t/p/\(size)\(path)")
 }
 
 class MovieService {
@@ -125,6 +135,14 @@ class MovieService {
         }
         let data = try await fetch("/3/discover/movie", query: query)
         return try JSONDecoder().decode(MovieResponse.self, from: data).results
+    }
+    
+    func getMovieDetails(id: Int) async throws -> MovieDetails {
+        let query = [
+            ("append_to_response", "credits"),
+        ]
+        let data = try await fetch("/3/movie/\(id)", query: query)
+        return try JSONDecoder().decode(MovieDetails.self, from: data)
     }
 
     func getGenres() async throws -> [Genre] {
