@@ -9,66 +9,53 @@ import SwiftUI
 
 struct MovieSwipeView: View {
     @EnvironmentObject private var engine: RecommendationEngine
-    @State private var swipeOffset: Double = 0
+    @State private var swipeOffsets: [Int: Double] = [:]
 
     var body: some View {
         ZStack {
             Style.appGradient
                 .ignoresSafeArea()
-            
+
             VStack {
-                Image("md-smart")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 200, height: 100)
-                    .foregroundStyle(.white)
-                
                 HStack {
                     NavigationLink(destination: SettingsView()){
                         Image(systemName: "person.circle")
                             .resizable()
-                            .frame(width: 40, height: 40)
-                            .foregroundStyle(.white)
+                            .frame(width: 30, height: 30)
                     }
-                    .padding(.leading, 20)
-                    
                     Spacer()
-                    
+                    Image("md-smart")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 200, height: 100)
+                    Spacer()
                     NavigationLink(destination: MatchedMoviesView()){
-                        Image(systemName: "heart.circle.fill")
+                        Image(systemName: "heart.circle")
                             .resizable()
-                            .frame(width: 40, height: 40)
-                            .foregroundStyle(.white)
+                            .frame(width: 30, height: 30)
                     }
-                    .padding(.trailing, 20)
                 }
-                
-                ZStack {
-                    ForEach(Array(engine.queue.enumerated()), id: \.0) { i, movie in
-                        MovieCardView(movie: movie)
-                            .offset(x: i == engine.queue.count - 1 ? swipeOffset : 0)
-                            .gesture(
-                                DragGesture()
-                                    .onChanged { gesture in
-                                        swipeOffset = gesture.translation.width
+                .foregroundStyle(.white)
+                .padding(.horizontal, 20)
+
+                ScrollView {
+                    VStack {
+                        if let movie = engine.queue.last {
+                            ZStack {
+                                ForEach(engine.queue) { movie in
+                                    MovieCardView(movie: movie, swipeOffsets: $swipeOffsets) { action in
+                                        action ? like() : dislike()
                                     }
-                                    .onEnded { gesture in
-                                        if gesture.translation.width < -50 {
-                                            dislike()
-                                        } else if gesture.translation.width > 50 {
-                                            like()
-                                        }
-                                        swipeOffset = 0
-                                    }
-                            )
-                        
+                                }
+                                OverlaySwipingIndicatorsView(swipeOffset: swipeOffsets[movie.id] ?? 0)
+                                    .zIndex(999)
+                            }
+                            MovieDetailsView(movie: movie)
+                        }
                     }
-                    overlaySwipingIndicators
-                        .zIndex(999999)
+                    .padding(.horizontal, 20)
                 }
-                .frame(maxHeight: .infinity)
-                .animation(.smooth, value: swipeOffset)
-                
+
                 HStack {
                     Button(action: dislike) {
                         Image(systemName: "xmark.circle.fill")
@@ -76,18 +63,16 @@ struct MovieSwipeView: View {
                             .frame(width: 60, height: 60)
                             .foregroundStyle(.white)
                     }
-                    .padding(.leading, 60)
                     Spacer()
-                    
                     Button(action: like) {
                         Image(systemName: "checkmark.circle.fill")
                             .resizable()
                             .frame(width: 60, height: 60)
                             .foregroundStyle(.white)
                     }
-                    .padding(.trailing, 60)
                 }
-                .padding()
+                .padding(.horizontal, 60)
+                .padding(.top, 20)
             }
             .padding()
             .task {
@@ -96,7 +81,20 @@ struct MovieSwipeView: View {
         }
     }
 
-    private var overlaySwipingIndicators: some View {
+    private func like() {
+        Task { await engine.pop() }
+        // TODO: Store in db
+    }
+
+    private func dislike() {
+        Task { await engine.pop() }
+    }
+}
+
+fileprivate struct OverlaySwipingIndicatorsView: View {
+    let swipeOffset: Double
+
+    var body: some View {
         ZStack {
             Circle()
                 .fill(Color.red.opacity(0.7))
@@ -126,117 +124,105 @@ struct MovieSwipeView: View {
         }
         .animation(.smooth, value: swipeOffset)
     }
-
-    private func like() {
-        Task { await engine.pop() }
-        // TODO: Store in db
-    }
-
-    private func dislike() {
-        Task { await engine.pop() }
-    }
 }
 
-struct MovieCardView: View {
+fileprivate struct MovieDetailsView: View {
     let movie: MovieDetails
-
+    
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            ScrollView {
-                MovieImageView(posterURL: movie.posterURL!)
-                    .frame(width: 300, height: 500)
-                    .cornerRadius(20)
-                    .overlay(
-                        VStack(alignment: .leading) {
-                            GenreTagView(genres: movie.genres)
-                        }
-                        .padding()
-                        .background(Color.black.opacity(0.4))
-                        .cornerRadius(20)
-                        .padding(.leading)
-                        .padding(.bottom, 30),
-                        alignment: .bottomLeading
-                    )
+        VStack {
+            Text("\(movie.title) (\(movie.release_date.prefix(4)))")
+                .multilineTextAlignment(.center)
+                .font(.title2)
+                .bold()
+                .foregroundStyle(.white)
+                .padding(.top, 5)
 
-                VStack {
-                    Text(movie.title)
-                        .font(.title2)
-                        .bold()
-                        .foregroundStyle(.white)
-                        .padding(.top, 5)
+            Text(movie.overview)
+                .font(.body)
+                .padding(.vertical)
+                .foregroundStyle(.white)
 
-                    Text("Overview: ")
-                        .font(.title3)
-                        .bold()
-                        .foregroundStyle(.white)
-                        .padding(.top, 10)
-                    
-                    Text(movie.overview)
-                        .font(.body)
-                        .padding()
-                        .foregroundStyle(.white)
-                    
-                    HStack {
-                        Text("Release date: ")
-                            .font(.title3)
-                            .bold()
-                            .foregroundStyle(.white)
-                            .padding(.leading, 15)
-                        Text(movie.release_date)
-                            .font(.body)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    
-                    HStack {
-                        Text("Cast: ")
-                            .padding(.top, 10)
-                            .font(.title3)
-                            .bold()
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.leading, 15)
-                        Text(movie.credits.cast.map{ $0.name }.joined(separator: ", "))
-                            .foregroundStyle(.white)
-                    }
+            HStack {
+                Text("Release date: ")
+                    .font(.title3)
+                    .bold()
+                    .foregroundStyle(.white)
+                    .padding(.vertical)
+                Text(movie.release_date)
+                    .font(.body)
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
-//                    HStack {
-//                        Text("Platforms: ")
-//                            .padding(.top, 10)
-//                            .font(.title3)
-//                            .bold()
-//                            .foregroundStyle(.white)
-//                            .padding(.leading, 15)
-//                        
-//                        Text(movie.platforms?.map { $0.name }.joined(separator: ", ") ?? "No platforms available")
-//                            .padding(.top, 10)
-//                            .font(.body)
-//                            .foregroundStyle(.white)
-//                            .frame(maxWidth: .infinity, alignment: .leading)
-//                    }
-                    
-                }
-                .frame(width: 300)
-                .background(Color.black.opacity(0.8))
-                .cornerRadius(20)
+            VStack {
+                Text("Cast: ")
+                    .padding(.vertical)
+                    .font(.title3)
+                    .bold()
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(movie.credits.cast.prefix(10).map{ $0.name }.joined(separator: ", "))
+                    .foregroundStyle(.white)
+            }
+
+            VStack {
+                Text("Watch: ")
+                    .padding(.vertical)
+                    .font(.title3)
+                    .bold()
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                Text(movie.providers.results["BG"]?.all.map { $0.name }.joined(separator: ", ") ?? "Not available")
+                    .foregroundStyle(.white)
             }
         }
+        .padding()
+        .background(Color.black.opacity(0.8))
+        .cornerRadius(20)
     }
 }
 
+fileprivate struct MovieCardView: View {
+    let movie: MovieDetails
+    @Binding var swipeOffsets: [Int: Double]
+    let onAction: (Bool) -> ()
 
-fileprivate struct MovieImageView: View {
+    var body: some View {
+        MoviePosterView(posterURL: movie.posterURL!)
+            .cornerRadius(20)
+            .overlay(GenreTagView(genres: movie.genres), alignment: .bottom)
+            .offset(x: swipeOffsets[movie.id] ?? 0)
+            .rotationEffect(.degrees(Double(swipeOffsets[movie.id] ?? 0) / 30))
+            .simultaneousGesture(
+                DragGesture()
+                    .onChanged { gesture in
+                        swipeOffsets[movie.id] = gesture.translation.width
+                    }
+                    .onEnded { gesture in
+                        let translationAmount = gesture.translation.width
+                        if abs(translationAmount) > 100 {
+                            onAction(translationAmount > 0)
+                        }
+                        swipeOffsets.removeValue(forKey: movie.id)
+                    }
+            )
+            .animation(.smooth, value: swipeOffsets)
+    }
+}
+
+fileprivate struct MoviePosterView: View {
     let posterURL: URL
-    
+
     var body: some View {
         AsyncImage(url: posterURL) { image in
             image.resizable()
                 .scaledToFit()
-                .frame(width: 300, height: 450)
+                .frame(maxWidth: .infinity)
                 .cornerRadius(20)
         } placeholder: {
             ProgressView().colorScheme(.dark)
-                .frame(width: 300, height: 450)
+                .frame(maxWidth: .infinity)
         }
     }
 }
@@ -255,9 +241,14 @@ fileprivate struct GenreTagView: View {
                     .cornerRadius(10)
             }
         }
+        .padding()
+        .background(Color.black.opacity(0.7))
+        .cornerRadius(20)
+        .padding(.bottom, 10)
     }
 }
 
 #Preview {
     MovieSwipeView()
+        .environmentObject(RecommendationEngine(auth: AuthService.preview, movieSvc: MovieService()))
 }

@@ -80,6 +80,18 @@ struct MovieDetails: Codable, Identifiable {
     let release_date: String
     let genres: [Genre]
     let credits: MovieCredits
+    let providers: MovieWatchProviders
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case title
+        case poster_path
+        case overview
+        case release_date
+        case genres
+        case credits
+        case providers = "watch/providers"
+    }
 
     var posterURL: URL? { imageUrl(size: "w500", path: poster_path) }
 }
@@ -87,6 +99,20 @@ struct MovieDetails: Codable, Identifiable {
 struct MovieCredits: Codable {
     let cast: [Person]
     let crew: [Person]
+}
+
+struct MovieWatchProviders: Codable {
+    let results: [String: MovieWatchProviderRegion]
+}
+
+struct MovieWatchProviderRegion: Codable {
+    let buy: [WatchProvider]?
+    let rent: [WatchProvider]?
+    let flatrate: [WatchProvider]?
+    
+    var all: [WatchProvider] {
+        [buy, rent, flatrate].compactMap{ $0 }.flatMap{ $0 }
+    }
 }
 
 struct Person: Identifiable, Codable {
@@ -139,7 +165,7 @@ class MovieService {
     
     func getMovieDetails(id: Int) async throws -> MovieDetails {
         let query = [
-            ("append_to_response", "credits"),
+            ("append_to_response", "credits,watch/providers"),
         ]
         let data = try await fetch("/3/movie/\(id)", query: query)
         return try JSONDecoder().decode(MovieDetails.self, from: data)

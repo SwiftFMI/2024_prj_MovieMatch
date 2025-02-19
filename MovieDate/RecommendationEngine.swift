@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+@MainActor
 class RecommendationEngine: ObservableObject {
     private let auth: AuthService
     private let movieSvc: MovieService
@@ -25,63 +26,69 @@ class RecommendationEngine: ObservableObject {
             (0, self.fromMatches),
             (0, self.fromOwnLikes),
             (0, self.fromPartnerLikes),
+            (2, self.fromSelected),
             (1, self.fromPopular),
-            (1, self.fromSelected),
         ]
     }
 
-    @MainActor
     func pop() async {
         guard !queue.isEmpty else { return }
         queue.removeLast()
         await fill()
     }
 
-    @MainActor
     func fill() async {
         while queue.count < queueSize {
             let id = await getRecomendation()
-            if let movie = try? await movieSvc.getMovieDetails(id: id) {
+            if let id = id, let movie = try? await movieSvc.getMovieDetails(id: id) {
                 queue.insert(movie, at: 0)
             }
+            try? await Task.sleep(for: .seconds(1))
         }
     }
 
-    func getRecomendation() async -> Int {
-        while true {
-            if let id = await fromAny(), !shown.contains(id) {
-                // TODO: Check if not liked and do what?
-                shown.insert(id)
-                return id
-            }
+    func getRecomendation() async -> Int? {
+        if let id = await fromAny(), isAvailabe(id: id) {
+            shown.insert(id)
+            return id
         }
+        return nil
     }
 
 
     private func fromMatches() -> Int? {
+        print(#function)
         // TODO: Same as ownLikes but from matches
         return nil
     }
 
     private func fromOwnLikes() -> Int? {
+        print(#function)
         // TODO: Similar/Recommended
         return nil
     }
 
     private func fromPartnerLikes() -> Int? {
+        print(#function)
         // TODO: Direct choose
         return nil
     }
 
-    private func fromPopular() async -> Int? {
-        let movies = (try? await movieSvc.getPopularMovies()) ?? []
-        return movies.randomElement()?.id
+    private func fromSelected() async -> Int? {
+        print(#function)
+        guard let user = auth.user else { return nil }
+        let movies = (try? await movieSvc.discoverMovies(genres: user.selectedGenres, actors: user.selectedActors, providers: user.selectedProviders)) ?? []
+        return movies.filter{isAvailabe(id: $0.id)}.randomElement()?.id
     }
 
-    private func fromSelected() async -> Int? {
-        guard let user = await auth.user else { return nil }
-        let movies = (try? await movieSvc.discoverMovies(genres: user.selectedGenres, actors: user.selectedActors, providers: user.selectedProviders)) ?? []
-        return movies.randomElement()?.id
+    private func fromPopular() async -> Int? {
+        print(#function)
+        let movies = (try? await movieSvc.getPopularMovies()) ?? []
+        return movies.filter{isAvailabe(id: $0.id)}.randomElement()?.id
+    }
+
+    private func isAvailabe(id: Int) -> Bool {
+        return !shown.contains(id) //&& !auth.userLikes.contains(id)
     }
 
     private func fromAny() async -> Int? {

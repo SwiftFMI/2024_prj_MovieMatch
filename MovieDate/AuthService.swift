@@ -58,6 +58,7 @@ class AuthService: ObservableObject {
     private var userListener: ListenerRegistration?
     private var partnersListener: ListenerRegistration?
 
+    static let shared = AuthService()
     static let preview = AuthService(user: User(uid: "1", email: "joe@example.com", name: "Joe"))
 
     private init(user: User?) {
@@ -75,8 +76,6 @@ class AuthService: ObservableObject {
             }
         }
     }
-
-    static let shared = AuthService()
 
     func signIn(email: String, password: String) async throws {
         try await Auth.auth().signIn(withEmail: email, password: password)
