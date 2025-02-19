@@ -11,7 +11,12 @@ struct AppView: View {
     @EnvironmentObject private var auth: AuthService
 
     var body: some View {
-        if let user = auth.user {
+        if !auth.loaded {
+            ZStack {
+                Style.appGradient
+                ProgressView().colorScheme(.dark)
+            }
+        } else if let user = auth.user {
             if !user.personalizeDone {
                 NavigationStack {
                     PersonalizeView()

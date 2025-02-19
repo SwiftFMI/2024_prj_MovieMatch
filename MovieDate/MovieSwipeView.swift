@@ -14,7 +14,6 @@ struct MovieSwipeView: View {
     var body: some View {
         ZStack {
             Style.appGradient
-                .ignoresSafeArea()
 
             VStack {
                 HStack {
@@ -51,6 +50,8 @@ struct MovieSwipeView: View {
                                     .zIndex(999)
                             }
                             MovieDetailsView(movie: movie)
+                        } else {
+                            ProgressView().colorScheme(.dark)
                         }
                     }
                     .padding(.horizontal, 20)
@@ -82,12 +83,13 @@ struct MovieSwipeView: View {
     }
 
     private func like() {
-        Task { await engine.pop() }
-        // TODO: Store in db
+        guard let id = engine.queue.last?.id else { return }
+        Task { await engine.like(id: id, liked: true) }
     }
 
     private func dislike() {
-        Task { await engine.pop() }
+        guard let id = engine.queue.last?.id else { return }
+        Task { await engine.like(id: id, liked: false) }
     }
 }
 
@@ -215,14 +217,17 @@ fileprivate struct MoviePosterView: View {
     let posterURL: URL
 
     var body: some View {
-        AsyncImage(url: posterURL) { image in
-            image.resizable()
-                .scaledToFit()
+        ZStack {
+            Rectangle().fill(.black)
                 .frame(maxWidth: .infinity)
-                .cornerRadius(20)
-        } placeholder: {
-            ProgressView().colorScheme(.dark)
-                .frame(maxWidth: .infinity)
+                .aspectRatio(2/3, contentMode: .fit)
+            AsyncImage(url: posterURL) { image in
+                image.resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity)
+            } placeholder: {
+                ProgressView()
+            }
         }
     }
 }

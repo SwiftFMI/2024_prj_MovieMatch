@@ -9,50 +9,18 @@ import Foundation
 import FirebaseAuth
 import FirebaseFirestore
 
-struct User: Codable, Identifiable {
-    var id: String { uid }
-    let uid: String
-    let email: String
-    let name: String
-    let personalizeDone: Bool
-    let selectedGenres: [Int]
-    let selectedProviders: [Int]
-    let selectedActors: [Int]
-    let partner: String?
-
-    enum CodingKeys: CodingKey {
-        case uid
-        case email
-        case name
-        case personalizeDone
-        case selectedGenres
-        case selectedProviders
-        case selectedActors
-        case partner
-    }
-
-    init(uid: String, email: String, name: String,
-         setupDone: Bool = false,
-         selectedGenres: [Int] = [],
-         selectedProviders: [Int] = [],
-         selectedActors: [Int] = [],
-         partner: String? = nil) {
-        self.uid = uid
-        self.email = email
-        self.name = name
-        self.personalizeDone = setupDone
-        self.selectedGenres = selectedGenres
-        self.selectedProviders = selectedProviders
-        self.selectedActors = selectedActors
-        self.partner = partner
-    }
-}
-
 @MainActor
 class AuthService: ObservableObject {
+    private struct LoadStatus {
+        var user: Bool = false
+        var partners: Bool = false
+    }
+    @Published private var loadStatus = LoadStatus()
+    var loaded: Bool { loadStatus.user && loadStatus.partners }
+
     @Published private(set) var user: User? = nil
     @Published private(set) var pendingPartners: [User] = []
-    @Published private(set) var mutualPartner: User? = nil
+    var mutualPartner: User? { self.pendingPartners.first(where: { self.user?.partner == $0.uid }) }
 
     private var authListener: AuthStateDidChangeListenerHandle?
     private var userListener: ListenerRegistration?
@@ -112,24 +80,49 @@ class AuthService: ObservableObject {
             .updateData([User.CodingKeys.partner.stringValue: uid])
     }
 
-    func trySetPartner(name: String) {
-        Task {
-            let snapshot = try? await usersCollection().whereField(User.CodingKeys.name.stringValue, isEqualTo: name).getDocuments()
-            let document = snapshot?.documents.first
-            let match = try? document?.data(as: User.self)
-            if let match = match {
-                setPartner(uid: match.uid)
-            }
+    func trySetPartner(name: String) async {
+        let snapshot = try? await usersCollection().whereField(User.CodingKeys.name.stringValue, isEqualTo: name).getDocuments()
+        let document = snapshot?.documents.first
+        let match = try? document?.data(as: User.self)
+        if let match = match {
+            setPartner(uid: match.uid)
         }
     }
 
+    func storeLike(movieId: Int) async throws {
+        guard let user = self.user, let partner = self.mutualPartner else { return }
+        let userLikeRef = userLikesCollection(user.uid).document(String(movieId))
+        let partnerLikeRef = userLikesCollection(partner.uid).document(String(movieId))
+
+        try userLikeRef.setData(from: UserLike(userId: user.uid, movieId: movieId))
+        if try await partnerLikeRef.getDocument().exists {
+            // Ensure consistent match id
+            let userIds = [user.uid, partner.uid].sorted()
+            let matchId = (userIds + [String(movieId)]).joined(separator: "-")
+            try matchesCollection()
+                .document(matchId)
+                .setData(from: UserMatch(userIds: userIds, movieId: movieId))
+        }
+    }
+
+    private func db() -> Firestore {
+        return Firestore.firestore()
+    }
+
+    private func matchesCollection() -> CollectionReference {
+        return db().collection("matches")
+    }
 
     private func usersCollection() -> CollectionReference {
-        return Firestore.firestore().collection("users")
+        return db().collection("users")
     }
 
     private func userDocument(_ uid: String) -> DocumentReference {
         return usersCollection().document(uid)
+    }
+
+    private func userLikesCollection(_ uid: String) -> CollectionReference {
+        return userDocument(uid).collection("likes")
     }
 
     private func userListen(uid: String) {
@@ -144,10 +137,10 @@ class AuthService: ObservableObject {
 
             if let snapshot = snapshot, snapshot.exists, let data = try? snapshot.data(as: User.self) {
                 self.user = data
-                setMutualPartner()
             } else {
                 self.user = nil
             }
+            self.loadStatus.user = true
         }
     }
 
@@ -165,21 +158,20 @@ class AuthService: ObservableObject {
                 self.pendingPartners = snapshot?.documents.compactMap({
                     try? $0.data(as: User.self)
                 }) ?? []
-                setMutualPartner()
+                self.loadStatus.partners = true
         }
-    }
-
-    private func setMutualPartner() {
-        self.mutualPartner = self.pendingPartners.first(where: { self.user?.partner == $0.uid })
     }
 
     private func onUserNil() {
         self.user = nil
+        self.pendingPartners = []
 
         self.userListener?.remove()
         self.userListener = nil
 
         self.partnersListener?.remove()
         self.partnersListener = nil
+
+        self.loadStatus = LoadStatus(user: true, partners: true)
     }
 }

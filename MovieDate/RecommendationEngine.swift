@@ -31,6 +31,13 @@ class RecommendationEngine: ObservableObject {
         ]
     }
 
+    func like(id: Int, liked: Bool) async {
+        if (liked) {
+            try? await auth.storeLike(movieId: id)
+        }
+        await pop()
+    }
+
     func pop() async {
         guard !queue.isEmpty else { return }
         queue.removeLast()

@@ -14,7 +14,6 @@ struct PartnerJoinView: View {
     var body: some View {
         ZStack {
             Style.appGradient
-                .ignoresSafeArea()
             VStack {
                 Text("Add Your Partner")
                     .font(.largeTitle)
@@ -30,7 +29,9 @@ struct PartnerJoinView: View {
                     .padding(.vertical, 10)
 
                 Button(action: {
-                    auth.trySetPartner(name: name)
+                    Task {
+                        await auth.trySetPartner(name: name)
+                    }
                 }){
                     Text("Send Invite")
                         .padding()
@@ -65,8 +66,7 @@ struct PartnerJoinView: View {
                 }
 
                 if auth.pendingPartners.isEmpty {
-                    ProgressView()
-                        .colorScheme(.dark)
+                    ProgressView().colorScheme(.dark)
                         .padding()
 
                 } else {

@@ -13,7 +13,6 @@ struct SettingsView: View {
     var body: some View {
         ZStack {
             Style.appGradient
-                .ignoresSafeArea()
 
             VStack {
                 if let user = auth.user {

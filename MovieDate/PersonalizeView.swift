@@ -14,7 +14,6 @@ struct PersonalizeView: View {
     var body: some View {
         ZStack {
             Style.appGradient
-                .ignoresSafeArea()
             
             VStack{
                 PersonalizeMovieGridView(movies: movies)
@@ -110,7 +109,7 @@ struct PersonalizeMoviePosterView: View {
                     .rotationEffect(.degrees(Double.random(in: -15...15)))
                     
             } placeholder: {
-                ProgressView()
+                ProgressView().colorScheme(.dark)
                     .frame(width: 100, height: 140)
             }
         } else {

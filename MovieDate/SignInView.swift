@@ -26,7 +26,6 @@ struct SignInView: View {
     var body: some View {
         ZStack {
             Style.appGradient
-                .ignoresSafeArea()
             VStack {
                 Text("Login")
                     .font(.largeTitle)

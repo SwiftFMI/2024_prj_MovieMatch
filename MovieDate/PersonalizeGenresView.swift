@@ -16,7 +16,6 @@ struct PersonalizeGenresView: View {
     var body: some View {
         ZStack {
             Style.appGradient
-                .ignoresSafeArea()
             
             VStack {
                 ProgressView(value: 1.0/3)

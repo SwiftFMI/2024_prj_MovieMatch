@@ -27,7 +27,6 @@ struct SignUpView: View {
     var body: some View {
         ZStack {
             Style.appGradient
-                .ignoresSafeArea()
             VStack {
                 Text("Create New Account")
                     .font(.largeTitle)

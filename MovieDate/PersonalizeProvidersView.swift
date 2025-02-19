@@ -16,7 +16,6 @@ struct PersonalizeProvidersView: View {
     var body: some View {
         ZStack {
             Style.appGradient
-                .ignoresSafeArea()
             
             VStack {
                 ProgressView(value: 3.0/3)
@@ -43,7 +42,7 @@ struct PersonalizeProvidersView: View {
                                         .clipShape(RoundedRectangle(cornerRadius: 12))
                                         .frame(width: 40, height: 40)
                                 } placeholder: {
-                                    ProgressView()
+                                    ProgressView().colorScheme(.dark)
                                         .frame(width: 40, height: 40)
                                 }
                                 SelectableButton(icon: icon, text: provider.name, isSelected: isSelected) {

@@ -30,7 +30,6 @@ struct PersonalizeActorsView: View {
     var body: some View {
         ZStack {
             Style.appGradient
-                .ignoresSafeArea()
 
             VStack {
                 ProgressView(value: 2.0/3)

@@ -11,7 +11,6 @@ struct MatchedMoviesView: View {
     var body: some View {
         ZStack {
             Style.appGradient
-                .ignoresSafeArea()
         }
     }
 }
