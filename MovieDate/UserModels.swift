@@ -47,9 +47,19 @@ struct User: Codable, Identifiable {
 struct UserLike: Codable {
     let userId: String
     let movieId: Int
+    
+    enum CodingKeys: CodingKey {
+        case userId
+        case movieId
+    }
 }
 
 struct UserMatch: Codable {
     let userIds: [String]
     let movieId: Int
+    
+    enum CodingKeys: CodingKey {
+        case userIds
+        case movieId
+    }
 }

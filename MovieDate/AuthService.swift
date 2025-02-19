@@ -17,21 +17,16 @@ protocol AuthChangeListener {
 
 @MainActor
 class AuthService: ObservableObject {
-    private let changeListeners: [AuthChangeListener]
     @Published var uid: String?
     
     init(uid: String?) {
-        self.changeListeners = []
         self.uid = uid
     }
 
     init(changeListeners: [AuthChangeListener]) {
-        self.changeListeners = changeListeners
         self.uid = nil
-
-        _ = Auth.auth().addStateDidChangeListener{ [weak self] _, user in
-            guard let self else { return }
-            notifyListeners(uid: user?.uid)
+        _ = Auth.auth().addStateDidChangeListener{ _, user in
+            changeListeners.forEach{ $0.onAuthChange(uid: user?.uid) }
         }
     }
 
@@ -47,11 +42,5 @@ class AuthService: ObservableObject {
 
     func signOut() throws {
         try Auth.auth().signOut()
-    }
-
-    private func notifyListeners(uid: String?) {
-        for l in self.changeListeners {
-            l.onAuthChange(uid: uid)
-        }
     }
 }

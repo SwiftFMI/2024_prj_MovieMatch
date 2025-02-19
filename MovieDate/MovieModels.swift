@@ -111,6 +111,6 @@ struct WatchProvider: Codable, Identifiable {
 
 
 fileprivate func imageUrl(size: String, path: String?) -> URL? {
-    guard let path = path else { return nil }
+    guard let path else { return nil }
     return URL(string: "https://image.tmdb.org/t/p/\(size)\(path)")
 }

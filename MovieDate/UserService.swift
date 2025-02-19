@@ -35,13 +35,14 @@ class UserService: ObservableObject, AuthChangeListener {
 
     func onAuthChange(uid: String?) {
         self.userListener?.remove()
-        if let uid = uid {
+        if let uid {
+            self.loaded = false
             self.userListener = userListen(uid: uid)
         } else {
             self.user = nil
             self.userListener = nil
-            notifyListeners(user: nil)
-            loaded = true
+            self.notifyListeners()
+            self.loaded = true
         }
     }
 
@@ -63,25 +64,20 @@ class UserService: ObservableObject, AuthChangeListener {
     private func userListen(uid: String) -> ListenerRegistration {
          return AppFirestore.userDocument(uid)
             .addSnapshotListener { [weak self] snapshot, error in
+            guard error == nil else { return }
             guard let self else { return }
-            if let error = error {
-                print(error.localizedDescription)
-                return
-            }
-
-            if let snapshot = snapshot, snapshot.exists, let data = try? snapshot.data(as: User.self) {
-                self.user = data
+            
+            if let snapshot, snapshot.exists, let user = try? snapshot.data(as: User.self) {
+                self.user = user
             } else {
                 self.user = nil
             }
-            notifyListeners(user: self.user)
+            notifyListeners()
             loaded = true
         }
     }
-
-    private func notifyListeners(user: User?) {
-        for l in self.changeListeners {
-            l.onUserChange(user: user)
-        }
+    
+    func notifyListeners() {
+        changeListeners.forEach{ $0.onUserChange(user: user) }
     }
 }

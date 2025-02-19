@@ -10,7 +10,7 @@ import SwiftUI
 @MainActor
 class RecommendationEngine: ObservableObject {
     private let userSvc: UserService
-    private let userPartnerSvc: UserPartnerService
+    private let userLikesSvc: UserLikesService
     private let movieSvc: MovieService
 
     private var shown: Set<Int> = []
@@ -19,9 +19,9 @@ class RecommendationEngine: ObservableObject {
     private let queueSize = 3
     @Published private(set) var queue: [MovieDetails] = []
 
-    init(userSvc: UserService, userPartnerSvc: UserPartnerService, movieSvc: MovieService) {
+    init(userSvc: UserService, userLikesSvc: UserLikesService, movieSvc: MovieService) {
         self.userSvc = userSvc
-        self.userPartnerSvc = userPartnerSvc
+        self.userLikesSvc = userLikesSvc
         self.movieSvc = movieSvc
         self.shown = []
         self.distribution = [
@@ -35,7 +35,7 @@ class RecommendationEngine: ObservableObject {
 
     func like(id: Int, liked: Bool) async {
         if (liked) {
-            try? await userPartnerSvc.likeAndMatch(movieId: id)
+            try? await userLikesSvc.likeAndMatch(movieId: id)
         }
         await pop()
     }
@@ -49,7 +49,7 @@ class RecommendationEngine: ObservableObject {
     func fill() async {
         while queue.count < queueSize {
             let id = await getRecomendation()
-            if let id = id, let movie = try? await movieSvc.getMovieDetails(id: id) {
+            if let id, let movie = try? await movieSvc.getMovieDetails(id: id) {
                 queue.insert(movie, at: 0)
             }
             try? await Task.sleep(for: .seconds(1))

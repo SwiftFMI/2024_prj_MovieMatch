@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct PartnerJoinView: View {
+    @EnvironmentObject private var userSvc: UserService
     @EnvironmentObject private var userPartnerSvc: UserPartnerService
     @State private var name: String = "";
 
@@ -58,7 +59,7 @@ struct PartnerJoinView: View {
                     .foregroundStyle(.white)
                     .fontWeight(.bold)
                 
-                if let user = userPartnerSvc.user {
+                if let user = userSvc.user {
                     Text(user.name)
                         .font(.title)
                         .foregroundStyle(.white.opacity(0.7))
@@ -83,5 +84,6 @@ struct PartnerJoinView: View {
 
 #Preview {
     PartnerJoinView()
+        .environmentObject(PreviewCompose.userSvc)
         .environmentObject(PreviewCompose.userPartnerSvc)
 }

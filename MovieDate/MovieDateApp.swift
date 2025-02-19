@@ -3,6 +3,7 @@ import FirebaseCore
 
 @main
 struct MovieDateApp: App {
+    @StateObject var userLikesSvc = AppCompose.userLikesSvc
     @StateObject var userPartnerSvc = AppCompose.userPartnerSvc
     @StateObject var userSvc = AppCompose.userSvc
     @StateObject var authSvc = AppCompose.authSvc
@@ -18,6 +19,7 @@ struct MovieDateApp: App {
                 .environmentObject(authSvc)
                 .environmentObject(userSvc)
                 .environmentObject(userPartnerSvc)
+                .environmentObject(userLikesSvc)
                 .environmentObject(recommendSvc)
         }
     }
