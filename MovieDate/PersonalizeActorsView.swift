@@ -10,7 +10,7 @@ import SwiftUI
 struct PersonalizeActorsView: View {
     private let movieSvc = MovieService()
 
-    @EnvironmentObject private var auth: AuthService
+    @EnvironmentObject private var userSvc: UserService
     @State private var searchText: String = ""
     @State private var searchResults: [Person] = []
     @State private var selectedActors: [Person] = []
@@ -64,10 +64,10 @@ struct PersonalizeActorsView: View {
                             : selectedActors
 
                         ForEach(actors) { actor in
-                            if let user = auth.user {
+                            if let user = userSvc.user {
                                 let isSelected = user.selectedActors.contains(actor.id) == true
                                 SelectableButton(text: actor.name, isSelected: isSelected) {
-                                    auth.updateUserSelect(key: .selectedActors, id: actor.id, isSelected: !isSelected)
+                                    userSvc.updateUserSelect(key: .selectedActors, id: actor.id, isSelected: !isSelected)
                                     if !searchText.isEmpty {
                                         searchText = ""
                                         searchResults = []
@@ -101,11 +101,11 @@ struct PersonalizeActorsView: View {
             .padding()
         }
         .onAppear(perform: fetchActors)
-        .onChange(of: auth.user?.selectedActors, fetchActors)
+        .onChange(of: userSvc.user?.selectedActors, fetchActors)
     }
 
     private func fetchActors() {
-        let selected = self.auth.user?.selectedActors ?? []
+        let selected = self.userSvc.user?.selectedActors ?? []
         let ids = exampleActors + selected.filter{ !exampleActors.contains($0) }
         Task {
             await withTaskGroup(of: (Int, Person?).self) { group in
@@ -140,5 +140,5 @@ struct PersonalizeActorsView: View {
 
 #Preview {
     PersonalizeActorsView()
-        .environmentObject(AuthService.preview)
+        .environmentObject(UserService.preview)
 }

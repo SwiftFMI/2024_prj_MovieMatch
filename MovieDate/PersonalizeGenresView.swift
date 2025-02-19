@@ -10,7 +10,7 @@ import SwiftUI
 struct PersonalizeGenresView: View {
     private let movieSvc = MovieService()
 
-    @EnvironmentObject private var auth: AuthService
+    @EnvironmentObject private var userSvc: UserService
     @State private var genres: [Genre] = []
 
     var body: some View {
@@ -33,11 +33,11 @@ struct PersonalizeGenresView: View {
                 ScrollView {
                     VStack {
                         ForEach(genres) { genre in
-                            if let user = auth.user {
+                            if let user = userSvc.user {
                                 let isSelected = user.selectedGenres.contains(genre.id) == true
                                 let icon = Text(genre.icon).font(.title)
                                 SelectableButton(icon: icon, text: genre.name, isSelected: isSelected) {
-                                    auth.updateUserSelect(key: .selectedGenres, id: genre.id, isSelected: !isSelected)
+                                    userSvc.updateUserSelect(key: .selectedGenres, id: genre.id, isSelected: !isSelected)
                                 }
                             }
                         }
@@ -80,5 +80,5 @@ struct PersonalizeGenresView: View {
 
 #Preview {
     PersonalizeGenresView()
-        .environmentObject(AuthService.preview)
+        .environmentObject(UserService.preview)
 }

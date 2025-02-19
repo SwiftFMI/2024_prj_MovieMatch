@@ -8,20 +8,21 @@
 import SwiftUI
 
 struct AppView: View {
-    @EnvironmentObject private var auth: AuthService
+    @EnvironmentObject private var userSvc: UserService
+    @EnvironmentObject private var userPartnerSvc: UserPartnerService
 
     var body: some View {
-        if !auth.loaded {
+        if !(userSvc.loaded && userPartnerSvc.loaded) {
             ZStack {
                 Style.appGradient
                 ProgressView().colorScheme(.dark)
             }
-        } else if let user = auth.user {
+        } else if let user = userSvc.user {
             if !user.personalizeDone {
                 NavigationStack {
                     PersonalizeView()
                 }
-            } else if auth.mutualPartner == nil {
+            } else if userPartnerSvc.mutualPartner == nil {
                 PartnerJoinView()
             } else {
                 NavigationStack {
@@ -38,5 +39,6 @@ struct AppView: View {
 
 #Preview {
     AppView()
-        .environmentObject(AuthService.preview)
+        .environmentObject(UserService.preview)
+        .environmentObject(UserPartnerService.preview)
 }

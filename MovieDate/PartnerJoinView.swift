@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct PartnerJoinView: View {
-    @EnvironmentObject private var auth: AuthService
+    @EnvironmentObject private var userPartnerSvc: UserPartnerService
     @State private var name: String = "";
 
     var body: some View {
@@ -30,7 +30,7 @@ struct PartnerJoinView: View {
 
                 Button(action: {
                     Task {
-                        await auth.trySetPartner(name: name)
+                        await userPartnerSvc.trySetPartner(name: name)
                     }
                 }){
                     Text("Send Invite")
@@ -58,21 +58,21 @@ struct PartnerJoinView: View {
                     .foregroundStyle(.white)
                     .fontWeight(.bold)
                 
-                if let user = auth.user {
+                if let user = userPartnerSvc.user {
                     Text(user.name)
                         .font(.title)
                         .foregroundStyle(.white.opacity(0.7))
                         .fontWeight(.bold)
                 }
 
-                if auth.pendingPartners.isEmpty {
+                if userPartnerSvc.pendingPartners.isEmpty {
                     ProgressView().colorScheme(.dark)
                         .padding()
 
                 } else {
-                    ForEach(auth.pendingPartners) { partner in
+                    ForEach(userPartnerSvc.pendingPartners) { partner in
                         SelectableButton(text: partner.name) {
-                            auth.setPartner(uid: partner.uid)
+                            userPartnerSvc.setPartner(uid: partner.uid)
                         }
                     }
                 }
@@ -83,5 +83,5 @@ struct PartnerJoinView: View {
 
 #Preview {
     PartnerJoinView()
-        .environmentObject(AuthService.preview)
+        .environmentObject(UserPartnerService.preview)
 }

@@ -9,7 +9,8 @@ import SwiftUI
 
 @MainActor
 class RecommendationEngine: ObservableObject {
-    private let auth: AuthService
+    private let userSvc: UserService
+    private let userPartnerSvc: UserPartnerService
     private let movieSvc: MovieService
 
     private var shown: Set<Int> = []
@@ -18,8 +19,9 @@ class RecommendationEngine: ObservableObject {
     private let queueSize = 3
     @Published private(set) var queue: [MovieDetails] = []
 
-    init(auth: AuthService, movieSvc: MovieService) {
-        self.auth = auth
+    init(userSvc: UserService, userPartnerSvc: UserPartnerService, movieSvc: MovieService) {
+        self.userSvc = userSvc
+        self.userPartnerSvc = userPartnerSvc
         self.movieSvc = movieSvc
         self.shown = []
         self.distribution = [
@@ -33,7 +35,7 @@ class RecommendationEngine: ObservableObject {
 
     func like(id: Int, liked: Bool) async {
         if (liked) {
-            try? await auth.storeLike(movieId: id)
+            try? await userPartnerSvc.storeLike(movieId: id)
         }
         await pop()
     }
@@ -83,7 +85,7 @@ class RecommendationEngine: ObservableObject {
 
     private func fromSelected() async -> Int? {
         print(#function)
-        guard let user = auth.user else { return nil }
+        guard let user = userSvc.user else { return nil }
         let movies = (try? await movieSvc.discoverMovies(genres: user.selectedGenres, actors: user.selectedActors, providers: user.selectedProviders)) ?? []
         return movies.filter{isAvailabe(id: $0.id)}.randomElement()?.id
     }

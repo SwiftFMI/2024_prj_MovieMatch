@@ -39,8 +39,8 @@
 		4D1FE25F2D28685900F65F43 = {
 			isa = PBXGroup;
 			children = (
-				4D1FE26A2D28685900F65F43 /* MovieDate */,
 				4D8D0C1D2D5CE1DF00E96C0A /* Frameworks */,
+				4D1FE26A2D28685900F65F43 /* MovieDate */,
 				4D1FE2692D28685900F65F43 /* Products */,
 			);
 			sourceTree = "<group>";

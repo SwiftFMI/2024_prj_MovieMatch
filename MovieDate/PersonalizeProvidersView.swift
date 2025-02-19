@@ -10,7 +10,7 @@ import SwiftUI
 struct PersonalizeProvidersView: View {
     private let movieSvc = MovieService()
 
-    @EnvironmentObject private var auth: AuthService
+    @EnvironmentObject private var userSvc: UserService
     @State private var providers: [WatchProvider] = []
 
     var body: some View {
@@ -33,7 +33,7 @@ struct PersonalizeProvidersView: View {
                 ScrollView {
                     VStack {
                         ForEach(providers) { provider in
-                            if let user = auth.user {
+                            if let user = userSvc.user {
                                 let isSelected = user.selectedProviders.contains(provider.id) == true
                                 let icon = AsyncImage(url: provider.logoUrl) { image in
                                     image
@@ -46,7 +46,7 @@ struct PersonalizeProvidersView: View {
                                         .frame(width: 40, height: 40)
                                 }
                                 SelectableButton(icon: icon, text: provider.name, isSelected: isSelected) {
-                                    auth.updateUserSelect(key: .selectedProviders, id: provider.id, isSelected: !isSelected)
+                                    userSvc.updateUserSelect(key: .selectedProviders, id: provider.id, isSelected: !isSelected)
                                 }
                             }
                         }
@@ -87,11 +87,11 @@ struct PersonalizeProvidersView: View {
     }
     
     private func finishPersonalize() {
-        auth.setPersonalizeDone(value: true)
+        userSvc.setPersonalizeDone(value: true)
     }
 }
 
 #Preview {
     PersonalizeProvidersView()
-        .environmentObject(AuthService.preview)
+        .environmentObject(UserService.preview)
 }

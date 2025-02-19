@@ -8,20 +8,20 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @EnvironmentObject private var auth: AuthService
+    @EnvironmentObject private var userSvc: UserService
 
     var body: some View {
         ZStack {
             Style.appGradient
 
             VStack {
-                if let user = auth.user {
+                if let user = userSvc.user {
                     Text("Hello, \(user.name)")
                         .foregroundStyle(.white)
                 }
 
                 Button(action: {
-                    try? auth.signOut()
+                    try? userSvc.signOut()
                 }) {
                     Text("Sign Out")
                 }
@@ -34,5 +34,5 @@ struct SettingsView: View {
 
 #Preview {
     SettingsView()
-        .environmentObject(AuthService.preview)
+        .environmentObject(UserService.preview)
 }
