@@ -70,7 +70,7 @@ struct PersonalizeView: View {
     }
 }
 
-struct PersonalizeMovieGridView: View {
+fileprivate struct PersonalizeMovieGridView: View {
     let movies: [Movie]
     
     var body: some View {
@@ -96,7 +96,7 @@ struct PersonalizeMovieGridView: View {
     }
 }
 
-struct PersonalizeMoviePosterView: View {
+fileprivate struct PersonalizeMoviePosterView: View {
     let movie: Movie
     
     var body: some View {

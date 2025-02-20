@@ -5,6 +5,9 @@
 //  Created by Mark Titorenkov on 19.02.25.
 //
 
+import Foundation
+import FirebaseFirestore
+
 struct User: Codable, Identifiable {
     var id: String { uid }
     let uid: String
@@ -47,19 +50,25 @@ struct User: Codable, Identifiable {
 struct UserLike: Codable {
     let userId: String
     let movieId: Int
-    
+
+    @ServerTimestamp var timestamp: Date?
+
     enum CodingKeys: CodingKey {
         case userId
         case movieId
+        case timestamp
     }
 }
 
 struct UserMatch: Codable {
     let userIds: [String]
     let movieId: Int
-    
+
+    @ServerTimestamp var timestamp: Date?
+
     enum CodingKeys: CodingKey {
         case userIds
         case movieId
+        case timestamp
     }
 }

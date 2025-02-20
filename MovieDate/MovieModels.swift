@@ -36,6 +36,7 @@ struct MovieDetails: Codable, Identifiable {
         case providers = "watch/providers"
     }
 
+    var year: String { String(release_date.prefix(4)) }
     var posterURL: URL? { imageUrl(size: "w500", path: poster_path) }
 }
 

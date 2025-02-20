@@ -73,7 +73,9 @@ class UserLikesService: ObservableObject, UserChangeListener, UserPartnerChangeL
     }
 
     private func userLikesListen(uid: String) -> ListenerRegistration {
-        return AppFirestore.userLikesCollection(uid)
+        return AppFirestore
+            .userLikesCollection(uid)
+            .order(by: UserLike.CodingKeys.timestamp.stringValue, descending: true)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard error == nil else { return }
                 guard let self else { return }
@@ -82,7 +84,9 @@ class UserLikesService: ObservableObject, UserChangeListener, UserPartnerChangeL
     }
 
     private func partnerLikesListen(uid: String) -> ListenerRegistration {
-        return AppFirestore.userLikesCollection(uid)
+        return AppFirestore
+            .userLikesCollection(uid)
+            .order(by: UserLike.CodingKeys.timestamp.stringValue, descending: true)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard error == nil else { return }
                 guard let self else { return }
@@ -91,7 +95,9 @@ class UserLikesService: ObservableObject, UserChangeListener, UserPartnerChangeL
     }
 
     private func userMatchesListen(uid: String) -> ListenerRegistration {
-        return AppFirestore.matchesCollection()
+        return AppFirestore
+            .matchesCollection()
+            .order(by: UserMatch.CodingKeys.timestamp.stringValue, descending: true)
             .whereField(UserMatch.CodingKeys.userIds.stringValue, arrayContains: uid)
             .addSnapshotListener { [weak self] snapshot, error in
                 guard error == nil else { return }

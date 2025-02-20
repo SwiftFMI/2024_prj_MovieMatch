@@ -133,7 +133,7 @@ fileprivate struct MovieDetailsView: View {
     
     var body: some View {
         VStack {
-            Text("\(movie.title) (\(movie.release_date.prefix(4)))")
+            Text("\(movie.title) (\(movie.year))")
                 .multilineTextAlignment(.center)
                 .font(.title2)
                 .bold()
