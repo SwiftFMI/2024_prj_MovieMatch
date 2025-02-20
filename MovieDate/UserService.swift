@@ -36,7 +36,9 @@ class UserService: ObservableObject, AuthChangeListener {
     func onAuthChange(uid: String?) {
         self.userListener?.remove()
         if let uid {
-            self.loaded = false
+            if self.user == nil {
+                self.loaded = false
+            }
             self.userListener = userListen(uid: uid)
         } else {
             self.user = nil

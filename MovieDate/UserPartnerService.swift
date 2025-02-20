@@ -17,10 +17,10 @@ protocol UserPartnerChangeListener {
 class UserPartnerService: ObservableObject, UserChangeListener {
     private let changeListeners: [UserPartnerChangeListener]
     private var listener: ListenerRegistration? = nil
-    private var user: User? = nil
 
     @Published private(set) var loaded: Bool = false
     @Published private(set) var pendingPartners: [User] = []
+    private var user: User? = nil
     var mutualPartner: User? { self.pendingPartners.first(where: { user?.partner == $0.uid }) }
 
     init(changeListeners: [UserPartnerChangeListener]) {
@@ -34,14 +34,20 @@ class UserPartnerService: ObservableObject, UserChangeListener {
     }
 
     func onUserChange(user: User?) {
-        self.user = user
-        self.listener?.remove()
         if let user {
-            self.loaded = false
-            self.listener = partnersListen(uid: user.uid)
+            if self.user == nil {
+                self.loaded = false
+                self.listener?.remove()
+                self.listener = partnersListen(uid: user.uid)
+            }
+            self.user = user
         } else {
+            self.listener?.remove()
             self.listener = nil
+
+            self.user = nil
             self.pendingPartners = []
+
             self.notifyListeners()
             self.loaded = true
         }
