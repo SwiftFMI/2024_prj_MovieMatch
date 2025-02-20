@@ -5,8 +5,6 @@
 //  Created by Mark Titorenkov on 17.02.25.
 //
 
-import SwiftUI
-
 struct UserContext {
     let user: User
     let liked: [Int]
@@ -26,7 +24,7 @@ struct Recommendation {
 
     let id: Int
     let reason: Reason
-    
+
     init(_ id: Int, _ reason: Reason) {
         self.id = id
         self.reason = reason
@@ -51,7 +49,6 @@ class RecommendationEngine {
 
     func getRecomendation(ctx: UserContext) async -> Recommendation? {
         if let rec = await fromProvider(ctx), isAvailabe(ctx, id: rec.id) {
-            print("Recommend", rec.id, rec.reason)
             return rec
         }
         return nil
@@ -140,10 +137,10 @@ class RecommendationEngine {
                 continue
             }
             let matches = res.results.filter{isAvailabe(ctx, id: $0.id)}
-            if !matches.isEmpty {
-                return matches.randomElement()!.id
+            if let m = matches.randomElement() {
+                return m.id
             }
-            page = Int.random(in: 1...min(res.total_pages, maxPage))
+            page = Int.random(in: 1...max(min(res.total_pages, maxPage), 1))
         }
         return nil
     }
