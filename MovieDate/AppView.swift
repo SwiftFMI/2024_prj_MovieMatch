@@ -23,7 +23,9 @@ struct AppView: View {
                     PersonalizeView()
                 }
             } else if userPartnerSvc.mutualPartner == nil {
-                PartnerJoinView()
+                NavigationStack {
+                    PartnerJoinView()
+                }
             } else {
                 NavigationStack {
                     MovieSwipeView()

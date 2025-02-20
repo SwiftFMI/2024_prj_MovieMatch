@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct PartnerJoinView: View {
+    @EnvironmentObject private var authSvc: AuthService
     @EnvironmentObject private var userSvc: UserService
     @EnvironmentObject private var userPartnerSvc: UserPartnerService
     @State private var name: String = "";
@@ -79,11 +80,20 @@ struct PartnerJoinView: View {
                 }
             }
         }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { try? authSvc.signOut() }) {
+                    Text("Sign Out")
+                        .foregroundStyle(.white)
+                }
+            }
+        }
     }
 }
 
 #Preview {
     PartnerJoinView()
+        .environmentObject(PreviewCompose.authSvc)
         .environmentObject(PreviewCompose.userSvc)
         .environmentObject(PreviewCompose.userPartnerSvc)
 }
