@@ -47,6 +47,7 @@ struct MovieCredits: Codable {
 
 struct MovieWatchProviders: Codable {
     let results: [String: MovieWatchProviderRegion]
+    var local: MovieWatchProviderRegion? { results["BG"] }
 }
 
 struct MovieWatchProviderRegion: Codable {

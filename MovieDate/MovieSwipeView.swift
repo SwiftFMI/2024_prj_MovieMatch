@@ -143,7 +143,7 @@ fileprivate struct ProvidersView: View {
     var body: some View {
         ScrollView(.horizontal) {
             HStack {
-                ForEach(providers.results["BG"]?.allUnique ?? []) { p in
+                ForEach(providers.local?.allUnique ?? []) { p in
                     VStack {
                         AsyncImage(url: p.logoUrl) { image in
                             image
