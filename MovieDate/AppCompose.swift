@@ -12,7 +12,6 @@ struct AppCompose {
     static let userPartnerSvc = UserPartnerService(changeListeners: [userLikesSvc])
     static let userSvc = UserService(changeListeners: [userPartnerSvc, userLikesSvc])
     static let authSvc = AuthService(changeListeners: [userSvc])
-    static let recommendSvc = RecommendationEngine(userSvc: userSvc, userLikesSvc: userLikesSvc, movieSvc: movieSvc)
 }
 
 @MainActor
@@ -27,5 +26,4 @@ struct PreviewCompose {
     static let userPartnerSvc = UserPartnerService(user: u1, partner: u2)
     static let userSvc = UserService(user: u1)
     static let authSvc = AuthService(uid: u1.uid)
-    static let recommendSvc = RecommendationEngine(userSvc: userSvc, userLikesSvc: userLikesSvc, movieSvc: AppCompose.movieSvc)
 }

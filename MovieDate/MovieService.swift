@@ -7,19 +7,21 @@
 
 import Foundation
 
-fileprivate struct MovieResponse: Codable{
+struct MovieResponse: Codable{
+    let total_pages: Int
+    let total_results: Int
     let results: [Movie]
 }
 
-fileprivate struct WatchProviderResponse: Codable {
+struct WatchProviderResponse: Codable {
     let results: [WatchProvider]
 }
 
-fileprivate struct PersonResponse: Codable {
+struct PersonResponse: Codable {
     let results: [Person]
 }
 
-fileprivate struct GenreResponse: Codable {
+struct GenreResponse: Codable {
     let genres: [Genre]
 }
 
@@ -27,20 +29,25 @@ class MovieService {
     private let host = "https://api.themoviedb.org"
     private let apiKey = "e13c8c80bb7b14cf140adb8aa6dd234d"
     private let apiReadToken = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJlMTNjOGM4MGJiN2IxNGNmMTQwYWRiOGFhNmRkMjM0ZCIsIm5iZiI6MTczNDYwNzg5OS45NjUsInN1YiI6IjY3NjQwNDFiZTE0ZTNiY2ZhNzRhNGEzNCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.wkdU83BIfm5cmiVbgkn_7red1z2Q1sZEeY8sHflqzKU"
+
+    private let lang: String
     private let session: URLSession
 
-    init() {
+    init(lang: String = "en-US") {
+        self.lang = lang
         let sessionConfig = URLSessionConfiguration.default
         sessionConfig.requestCachePolicy = .returnCacheDataElseLoad
         self.session = URLSession(configuration: sessionConfig)
     }
 
     func getPopularMovies() async throws -> [Movie] {
-        let data = try await fetch("/3/movie/popular")
-        return try JSONDecoder().decode(MovieResponse.self, from: data).results
+        return try await discoverMovies().results
     }
 
-    func discoverMovies(genres: [Int], actors: [Int], providers: [Int]) async throws -> [Movie] {
+    func discoverMovies(genres: [Int]  = [],
+                        actors: [Int] = [],
+                        providers: [Int] = [],
+                        page: Int = 1) async throws -> MovieResponse {
         var query: [(String, String)] = []
         if !genres.isEmpty {
             query.append(("with_genres", filter(genres, sep: "|")))
@@ -52,39 +59,44 @@ class MovieService {
             query.append(("watch_region", "BG"))
             query.append(("with_watch_providers", filter(providers, sep: "|")))
         }
-        let data = try await fetch("/3/discover/movie", query: query)
-        return try JSONDecoder().decode(MovieResponse.self, from: data).results
+        query.append(("page", String(page)))
+        return try await fetch(as: MovieResponse.self, "/3/discover/movie", query: query)
     }
-    
+
+    func getRecommendation(id: Int, page: Int = 1) async throws -> MovieResponse {
+        let query = [("page", String(page))]
+        return try await fetch(as: MovieResponse.self, "/3/movie/\(id)/recommendations", query: query)
+    }
+
+    func getSimilar(id: Int, page: Int = 1) async throws -> MovieResponse {
+        let query = [("page", String(page))]
+        return try await fetch(as: MovieResponse.self, "/3/movie/\(id)/similar", query: query)
+    }
+
     func getMovieDetails(id: Int) async throws -> MovieDetails {
         let query = [
             ("append_to_response", "credits,watch/providers"),
         ]
-        let data = try await fetch("/3/movie/\(id)", query: query)
-        return try JSONDecoder().decode(MovieDetails.self, from: data)
+        return try await fetch(as: MovieDetails.self, "/3/movie/\(id)", query: query)
     }
 
     func getGenres() async throws -> [Genre] {
-        let data = try await fetch("/3/genre/movie/list")
-        return try JSONDecoder().decode(GenreResponse.self, from: data).genres
+        return try await fetch(as: GenreResponse.self, "/3/genre/movie/list").genres
     }
 
     func getProviders() async throws -> [WatchProvider] {
         let query = [("watch_region", "BG")]
-        let data = try await fetch("/3/watch/providers/movie", query: query)
-        let results = try JSONDecoder().decode(WatchProviderResponse.self, from: data).results
+        let results = try await fetch(as: WatchProviderResponse.self, "/3/watch/providers/movie", query: query).results
         return results.sorted(by: { $0.display_priority < $1.display_priority })
     }
 
     func getPerson(id: Int) async throws -> Person {
-        let data = try await fetch("/3/person/\(id)")
-        return try JSONDecoder().decode(Person.self, from: data)
+        return try await fetch(as: Person.self, "/3/person/\(id)")
     }
 
     func searchPeople(query: String) async throws -> [Person] {
         let query = [("query", query)]
-        let data = try await fetch("/3/search/person", query: query)
-        let results = try JSONDecoder().decode(PersonResponse.self, from: data).results
+        let results = try await fetch(as: PersonResponse.self, "/3/search/person", query: query).results
         return results
             .filter({ $0.popularity > 1 })
             .sorted(by: { $0.popularity > $1.popularity })
@@ -94,12 +106,22 @@ class MovieService {
         return ids.map{String($0)}.joined(separator: sep)
     }
 
-    private func fetch(_ endpoint: String, query: [(String, String)] = [], lang: String = "en") async throws -> Data {
+    private func fetch<T: Decodable>(as: T.Type, _ endpoint: String, query: [(String, String?)] = []) async throws -> T {
+        let data = try await fetch(endpoint, query: query)
+        do {
+            let decoded = try JSONDecoder().decode(T.self, from: data)
+            return decoded
+        } catch {
+            print("Decode error", error.localizedDescription)
+            throw error
+        }
+    }
+
+    private func fetch(_ endpoint: String, query: [(String, String?)] = []) async throws -> Data {
         let url = URL(string: host + endpoint)!
         var components = URLComponents(url: url, resolvingAgainstBaseURL: true)!
-        let queryItems = query.map{ (n, v) in URLQueryItem(name: n, value: v)} + [
-          URLQueryItem(name: "language", value: lang),
-        ]
+        var queryItems = query.map{ (n, v) in URLQueryItem(name: n, value: v)}
+        queryItems.append(URLQueryItem(name: "language", value: self.lang))
         components.queryItems = queryItems
 
         var request = URLRequest(url: components.url!)
@@ -114,8 +136,14 @@ class MovieService {
             return cachedResponse.data
         }
 
-        let (data, _) = try await self.session.data(for: request)
-        print("Fetched \(endpoint)")
-        return data
+        do {
+            let (data, response) = try await self.session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else { throw URLError(.badServerResponse) }
+            return data
+        } catch {
+            print("Fetch error", error)
+            throw error
+        }
     }
 }

@@ -8,8 +8,24 @@
 import SwiftUI
 
 struct MovieSwipeView: View {
-    @EnvironmentObject private var engine: RecommendationEngine
+    private let movieSvc: MovieService
+    private let engine: RecommendationEngine
+
+    @EnvironmentObject private var userSvc: UserService
+    @EnvironmentObject private var userLikesSvc: UserLikesService
+
+    @State private var shown: Set<Int> = []
+
+    private let queueSize = 5
+    @State private var queueTask: Task<(), Never>? = nil
+    @State private var queue: [MovieDetails] = []
+
     @State private var swipeOffsets: [Int: Double] = [:]
+
+    init() {
+        movieSvc = AppCompose.movieSvc
+        engine = RecommendationEngine(movieSvc: movieSvc)
+    }
 
     var body: some View {
         ZStack {
@@ -39,9 +55,9 @@ struct MovieSwipeView: View {
 
                 ScrollView {
                     VStack {
-                        if let movie = engine.queue.last {
+                        if let movie = queue.last {
                             ZStack {
-                                ForEach(engine.queue) { movie in
+                                ForEach(queue) { movie in
                                     MovieCardView(movie: movie, swipeOffsets: $swipeOffsets) { action in
                                         action ? like() : dislike()
                                     }
@@ -75,20 +91,53 @@ struct MovieSwipeView: View {
             }
             .padding(.horizontal, 20)
             .task {
-                await engine.fill()
+                fillQueue()
             }
         }
         .colorScheme(.dark)
     }
 
     private func like() {
-        guard let id = engine.queue.last?.id else { return }
-        Task { await engine.like(id: id, liked: true) }
+        guard let id = pop() else { return }
+        Task {
+            try? await userLikesSvc.likeAndMatch(movieId: id)
+        }
     }
 
     private func dislike() {
-        guard let id = engine.queue.last?.id else { return }
-        Task { await engine.like(id: id, liked: false) }
+        pop()
+    }
+
+    @discardableResult
+    private func pop() -> Int? {
+        guard let movie = queue.last else { return nil }
+        print("Swipe", movie.id)
+        queue.removeLast()
+        fillQueue()
+        return movie.id
+    }
+
+    private func fillQueue() {
+        guard let user = userSvc.user else { return }
+        guard queueTask == nil else { return }
+        queueTask = Task {
+            while queue.count < queueSize {
+                let ctx = UserContext(user: user,
+                                      liked: userLikesSvc.userLikes.map{$0.movieId},
+                                      partnerLiked: userLikesSvc.partnerLikes.map{$0.movieId},
+                                      matched: userLikesSvc.userMatches.map{$0.movieId},
+                                      shown: shown)
+                let id = await engine.getRecomendation(ctx: ctx)?.id
+                if let id, let movie = try? await movieSvc.getMovieDetails(id: id) {
+                    shown.insert(id)
+                    queue.insert(movie, at: 0)
+                } else {
+                    print("Engine fail. Sleeping")
+                    try? await Task.sleep(for: .seconds(1))
+                }
+            }
+            queueTask = nil
+        }
     }
 }
 
@@ -299,5 +348,6 @@ fileprivate struct GenreTagView: View {
 
 #Preview {
     MovieSwipeView()
-        .environmentObject(PreviewCompose.recommendSvc)
+        .environmentObject(PreviewCompose.userSvc)
+        .environmentObject(PreviewCompose.userLikesSvc)
 }

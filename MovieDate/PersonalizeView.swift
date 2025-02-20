@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct PersonalizeView: View {
-    private let movieSvc = MovieService()
+    private let movieSvc = AppCompose.movieSvc
+
     @State private var movies: [Movie] = []
     
     var body: some View {

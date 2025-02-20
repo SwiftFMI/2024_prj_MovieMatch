@@ -7,7 +7,6 @@ struct MovieDateApp: App {
     @StateObject var userPartnerSvc = AppCompose.userPartnerSvc
     @StateObject var userSvc = AppCompose.userSvc
     @StateObject var authSvc = AppCompose.authSvc
-    @StateObject var recommendSvc = AppCompose.recommendSvc
 
     init() {
         FirebaseApp.configure()
@@ -20,7 +19,6 @@ struct MovieDateApp: App {
                 .environmentObject(userSvc)
                 .environmentObject(userPartnerSvc)
                 .environmentObject(userLikesSvc)
-                .environmentObject(recommendSvc)
         }
     }
 }

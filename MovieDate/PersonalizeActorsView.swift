@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct PersonalizeActorsView: View {
-    private let movieSvc = MovieService()
+    private let movieSvc = AppCompose.movieSvc
 
     @EnvironmentObject private var userSvc: UserService
     @State private var searchText: String = ""

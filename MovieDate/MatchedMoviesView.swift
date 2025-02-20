@@ -31,7 +31,7 @@ struct MatchedMoviesView: View {
 }
 
 fileprivate struct MovieView: View {
-    private let movieSvc = MovieService()
+    private let movieSvc = AppCompose.movieSvc
     let id: Int
     @State var movie: MovieDetails? = nil
     

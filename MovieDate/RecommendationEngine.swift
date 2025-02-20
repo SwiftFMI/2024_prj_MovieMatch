@@ -7,110 +7,148 @@
 
 import SwiftUI
 
-@MainActor
-class RecommendationEngine: ObservableObject {
-    private let userSvc: UserService
-    private let userLikesSvc: UserLikesService
+struct UserContext {
+    let user: User
+    let liked: [Int]
+    let partnerLiked: [Int]
+    let matched: [Int]
+    let shown: Set<Int>
+}
+
+struct Recommendation {
+    enum Reason {
+        case fromMatch(id: Int)
+        case fromOwnLike(id: Int)
+        case fromPartnerLikes
+        case fromSelected
+        case fromPopular
+    }
+
+    let id: Int
+    let reason: Reason
+    
+    init(_ id: Int, _ reason: Reason) {
+        self.id = id
+        self.reason = reason
+    }
+}
+
+class RecommendationEngine {
     private let movieSvc: MovieService
 
-    private var shown: Set<Int> = []
-    private var distribution: [(Int, () async -> Int?)] = []
+    private var providers: [(Int, (UserContext) async -> Recommendation?)] = []
 
-    private let queueSize = 3
-    @Published private(set) var queue: [MovieDetails] = []
-
-    init(userSvc: UserService, userLikesSvc: UserLikesService, movieSvc: MovieService) {
-        self.userSvc = userSvc
-        self.userLikesSvc = userLikesSvc
+    init(movieSvc: MovieService) {
         self.movieSvc = movieSvc
-        self.shown = []
-        self.distribution = [
-            (0, self.fromMatches),
-            (0, self.fromOwnLikes),
-            (0, self.fromPartnerLikes),
-            (2, self.fromSelected),
-            (1, self.fromPopular),
+        self.providers = [
+            (25, self.fromMatches),
+            (25, self.fromOwnLikes),
+            (25, self.fromPartnerLikes),
+            (20, self.fromSelected),
+            (10, self.fromPopular),
         ]
     }
 
-    func like(id: Int, liked: Bool) async {
-        if (liked) {
-            try? await userLikesSvc.likeAndMatch(movieId: id)
-        }
-        await pop()
-    }
-
-    func pop() async {
-        guard !queue.isEmpty else { return }
-        queue.removeLast()
-        await fill()
-    }
-
-    func fill() async {
-        while queue.count < queueSize {
-            let id = await getRecomendation()
-            if let id, let movie = try? await movieSvc.getMovieDetails(id: id) {
-                queue.insert(movie, at: 0)
-            }
-            try? await Task.sleep(for: .seconds(1))
-        }
-    }
-
-    func getRecomendation() async -> Int? {
-        if let id = await fromAny(), isAvailabe(id: id) {
-            shown.insert(id)
-            return id
+    func getRecomendation(ctx: UserContext) async -> Recommendation? {
+        if let rec = await fromProvider(ctx), isAvailabe(ctx, id: rec.id) {
+            print("Recommend", rec.id, rec.reason)
+            return rec
         }
         return nil
     }
 
-
-    private func fromMatches() -> Int? {
-        print(#function)
-        // TODO: Same as ownLikes but from matches
-        return nil
-    }
-
-    private func fromOwnLikes() -> Int? {
-        print(#function)
-        // TODO: Similar/Recommended
-        return nil
-    }
-
-    private func fromPartnerLikes() -> Int? {
-        print(#function)
-        // TODO: Direct choose
-        return nil
-    }
-
-    private func fromSelected() async -> Int? {
-        print(#function)
-        guard let user = userSvc.user else { return nil }
-        let movies = (try? await movieSvc.discoverMovies(genres: user.selectedGenres, actors: user.selectedActors, providers: user.selectedProviders)) ?? []
-        return movies.filter{isAvailabe(id: $0.id)}.randomElement()?.id
-    }
-
-    private func fromPopular() async -> Int? {
-        print(#function)
-        let movies = (try? await movieSvc.getPopularMovies()) ?? []
-        return movies.filter{isAvailabe(id: $0.id)}.randomElement()?.id
-    }
-
-    private func isAvailabe(id: Int) -> Bool {
-        return !shown.contains(id) //&& !auth.userLikes.contains(id)
-    }
-
-    private func fromAny() async -> Int? {
-        let totalWeight = distribution.reduce(0) { res, el in res + el.0 }
-        let randomValue = Int.random(in: 0..<totalWeight)
-        var cumulativeWeight = 0
-        for (weight, function) in distribution {
-            cumulativeWeight += weight
-            if randomValue < cumulativeWeight {
-                return await function()
+    private func fromProvider(_ ctx: UserContext) async -> Recommendation? {
+        var possibleProviders = providers
+        while !possibleProviders.isEmpty {
+            let totalWeight = possibleProviders.reduce(0) { pw, p in pw + p.0 }
+            let randomValue = Int.random(in: 0..<totalWeight)
+            var cumulativeWeight = 0
+            for (i, provider) in possibleProviders.enumerated() {
+                let (weight, call) = provider
+                cumulativeWeight += weight
+                if randomValue < cumulativeWeight {
+                    let rec = await call(ctx)
+                    if let rec {
+                        return rec
+                    } else {
+                        possibleProviders.remove(at: i)
+                        break
+                    }
+                }
             }
         }
         return nil
     }
 
+
+    private func fromMatches(ctx: UserContext) async -> Recommendation? {
+        guard let matchId = ctx.matched.randomElement() else { return nil }
+        guard let id = await fromRelated(ctx: ctx, id: matchId) else { return nil }
+        return Recommendation(id, .fromMatch(id: matchId))
+    }
+
+    private func fromOwnLikes(ctx: UserContext) async -> Recommendation? {
+        guard let likeId = ctx.liked.randomElement() else { return nil }
+        guard let id = await fromRelated(ctx: ctx, id: likeId) else { return nil }
+        return Recommendation(id, .fromOwnLike(id: id))
+    }
+
+    private func fromPartnerLikes(ctx: UserContext) -> Recommendation? {
+        guard let id = ctx.partnerLiked
+            .filter({isAvailabe(ctx, id: $0)})
+            .randomElement() else { return nil }
+        return Recommendation(id, .fromPartnerLikes)
+    }
+
+    private func fromSelected(ctx: UserContext) async -> Recommendation? {
+        let id = await fromQuery(ctx: ctx, attempts: 5, maxPage: 100) { page in
+            try await movieSvc.discoverMovies(
+                genres: ctx.user.selectedGenres,
+                actors: ctx.user.selectedActors,
+                providers: ctx.user.selectedProviders,
+                page: page)
+        }
+        guard let id else { return nil }
+        return Recommendation(id, .fromSelected)
+    }
+
+    private func fromPopular(ctx: UserContext) async -> Recommendation? {
+        let id = await fromQuery(ctx: ctx, attempts: 5, maxPage: 100) { page in
+            try await movieSvc.discoverMovies(
+                providers: ctx.user.selectedProviders,
+                page: page)
+        }
+        guard let id else { return nil }
+        return Recommendation(id, .fromPopular)
+    }
+
+    private func fromRelated(ctx: UserContext, id: Int) async -> Int? {
+        return await fromQuery(ctx: ctx, attempts: 2, maxPage: 4) { page in
+            try await movieSvc.getRecommendation(id: id, page: page)
+        }
+    }
+
+    private func fromQuery(ctx: UserContext,
+                           attempts: Int,
+                           maxPage: Int,
+                           call: (Int) async throws -> MovieResponse) async -> Int? {
+        var page = 1
+        for _ in 1...attempts {
+            let res = try? await call(page)
+            guard let res else {
+                page = 1
+                continue
+            }
+            let matches = res.results.filter{isAvailabe(ctx, id: $0.id)}
+            if !matches.isEmpty {
+                return matches.randomElement()!.id
+            }
+            page = Int.random(in: 1...min(res.total_pages, maxPage))
+        }
+        return nil
+    }
+
+    private func isAvailabe(_ ctx: UserContext, id: Int) -> Bool {
+        return !ctx.shown.contains(id) && !ctx.liked.contains(id)
+    }
 }
