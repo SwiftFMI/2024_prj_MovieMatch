@@ -28,7 +28,7 @@ struct AppView: View {
                 }
             } else {
                 NavigationStack {
-                    MovieSwipeView()
+                    HomeView()
                 }
             }
         } else {
