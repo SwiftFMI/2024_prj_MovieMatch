@@ -1,5 +1,5 @@
 //
-//  MatchedMoviesView.swift
+//  MovieMatchesView.swift
 //  MovieDate
 //
 //  Created by Darina Baneva on 17.02.25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct MatchedMoviesView: View {
+struct MovieMatchesView: View {
     @EnvironmentObject var userLikesSvc: UserLikesService
 
     var body: some View {
@@ -72,7 +72,7 @@ fileprivate struct MovieView: View {
 
 #Preview {
     NavigationStack {
-        MatchedMoviesView()
+        MovieMatchesView()
             .environmentObject(PreviewCompose.userLikesSvc)
     }
 }

@@ -11,6 +11,7 @@ struct HomeView: View {
     @EnvironmentObject private var userSvc: UserService
     @EnvironmentObject private var userLikesSvc: UserLikesService
     @StateObject private var movieQueue = MovieQueue()
+    @StateObject private var movieMatch = MovieMatchState()
 
     var body: some View {
         ZStack {
@@ -29,7 +30,7 @@ struct HomeView: View {
                         .scaledToFit()
                         .frame(height: 60)
                     Spacer()
-                    NavigationLink(destination: MatchedMoviesView()){
+                    NavigationLink(destination: MovieMatchesView()){
                         Image(systemName: "heart.circle")
                             .resizable()
                             .frame(width: 30, height: 30)
@@ -60,11 +61,17 @@ struct HomeView: View {
                 .padding(.top, 20)
             }
             .padding(.horizontal, 20)
-            .task {
-                movieQueue.fill(userSvc: userSvc, userLikesSvc: userLikesSvc)
-            }
         }
         .colorScheme(.dark)
+        .onAppear {
+            movieQueue.fill(userSvc: userSvc, userLikesSvc: userLikesSvc)
+        }
+        .onChange(of: userLikesSvc.userMatches.count) { old, new in
+            movieMatch.onMatchCountChange(old: old, new: new, latest: userLikesSvc.userMatches.first)
+        }
+        .sheet(isPresented: movieMatch.show) {
+            MovieMatchView(movie: $movieMatch.movie)
+        }
     }
 
     private func swipe(_ isLike: Bool) {
