@@ -26,7 +26,7 @@ struct MovieSwipeView: View {
                     Image("md-smart")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 200, height: 100)
+                        .frame(height: 60)
                     Spacer()
                     NavigationLink(destination: MatchedMoviesView()){
                         Image(systemName: "heart.circle")
@@ -34,8 +34,8 @@ struct MovieSwipeView: View {
                             .frame(width: 30, height: 30)
                     }
                 }
+                .padding(.vertical, 10)
                 .foregroundStyle(.white)
-                .padding(.horizontal, 20)
 
                 ScrollView {
                     VStack {
@@ -54,7 +54,6 @@ struct MovieSwipeView: View {
                             ProgressView().colorScheme(.dark)
                         }
                     }
-                    .padding(.horizontal, 20)
                 }
 
                 HStack {
@@ -62,24 +61,24 @@ struct MovieSwipeView: View {
                         Image(systemName: "xmark.circle.fill")
                             .resizable()
                             .frame(width: 60, height: 60)
-                            .foregroundStyle(.white)
                     }
                     Spacer()
                     Button(action: like) {
                         Image(systemName: "checkmark.circle.fill")
                             .resizable()
                             .frame(width: 60, height: 60)
-                            .foregroundStyle(.white)
                     }
                 }
+                .foregroundStyle(.white)
                 .padding(.horizontal, 60)
                 .padding(.top, 20)
             }
-            .padding()
+            .padding(.horizontal, 20)
             .task {
                 await engine.fill()
             }
         }
+        .colorScheme(.dark)
     }
 
     private func like() {
@@ -130,58 +129,100 @@ fileprivate struct OverlaySwipingIndicatorsView: View {
 
 fileprivate struct MovieDetailsView: View {
     let movie: MovieDetails
-    
+
     var body: some View {
         VStack {
             Text("\(movie.title) (\(movie.year))")
                 .multilineTextAlignment(.center)
                 .font(.title2)
                 .bold()
-                .foregroundStyle(.white)
                 .padding(.top, 5)
 
             Text(movie.overview)
                 .font(.body)
                 .padding(.vertical)
-                .foregroundStyle(.white)
 
             HStack {
-                Text("Release date: ")
+                Text("Released")
                     .font(.title3)
                     .bold()
-                    .foregroundStyle(.white)
                     .padding(.vertical)
                 Text(movie.release_date)
                     .font(.body)
-                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             VStack {
-                Text("Cast: ")
+                Text("Cast")
                     .padding(.vertical)
                     .font(.title3)
                     .bold()
-                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text(movie.credits.cast.prefix(10).map{ $0.name }.joined(separator: ", "))
-                    .foregroundStyle(.white)
+                CastView(cast: movie.credits.cast)
             }
 
             VStack {
-                Text("Watch: ")
+                Text("Watch")
                     .padding(.vertical)
                     .font(.title3)
                     .bold()
-                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                Text(movie.providers.results["BG"]?.all.map { $0.name }.joined(separator: ", ") ?? "Not available")
-                    .foregroundStyle(.white)
+                ProvidersView(providers: movie.providers)
             }
         }
         .padding()
         .background(Color.black.opacity(0.8))
+        .colorScheme(.dark)
         .cornerRadius(20)
+    }
+}
+
+fileprivate struct CastView: View {
+    let cast: [Person]
+    
+    var body: some View {
+        ScrollView(.horizontal) {
+            HStack(alignment: .top) {
+                ForEach(cast.prefix(10)) { p in
+                    VStack {
+                        AsyncImage(url: p.profileUrl) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        } placeholder: {
+                            Color.gray
+                        }
+                        .frame(width: 100, height: 100)
+                        .clipShape(Circle())
+                        Text(p.name)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(width: 100)
+                    .padding(.horizontal, 5)
+                }
+            }
+        }
+    }
+}
+
+fileprivate struct ProvidersView: View {
+    let providers: MovieWatchProviders
+
+    var body: some View {
+        ScrollView(.horizontal) {
+            HStack {
+                ForEach(providers.results["BG"]?.all ?? []) { p in
+                    VStack {
+                        AsyncImage(url: p.logoUrl) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        } placeholder: { Color.gray }
+                        Text(p.name)
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -24,7 +24,7 @@ struct MovieDetails: Codable, Identifiable {
     let genres: [Genre]
     let credits: MovieCredits
     let providers: MovieWatchProviders
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case title
@@ -63,6 +63,11 @@ struct Person: Identifiable, Codable {
     let id: Int
     let name: String
     let popularity: Double
+    let profile_path: String?
+
+    var profileUrl: URL? {
+        imageUrl(size: "w185", path: profile_path)
+    }
 }
 
 struct Genre: Codable, Identifiable {
