@@ -54,8 +54,13 @@ struct MovieWatchProviderRegion: Codable {
     let rent: [WatchProvider]?
     let flatrate: [WatchProvider]?
     
-    var all: [WatchProvider] {
-        [buy, rent, flatrate].compactMap{ $0 }.flatMap{ $0 }
+    var allUnique: [WatchProvider] {
+        [buy, rent, flatrate]
+            .compactMap{ $0 }
+            .flatMap{ $0 }
+            .reduce(into: []) { arr, p in
+                arr.contains(where: { $0.id == p.id }) ? () : arr.append(p)
+            }
     }
 }
 

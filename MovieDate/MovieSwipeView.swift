@@ -211,13 +211,16 @@ fileprivate struct ProvidersView: View {
     var body: some View {
         ScrollView(.horizontal) {
             HStack {
-                ForEach(providers.results["BG"]?.all ?? []) { p in
+                ForEach(providers.results["BG"]?.allUnique ?? []) { p in
                     VStack {
                         AsyncImage(url: p.logoUrl) { image in
                             image
                                 .resizable()
                                 .scaledToFill()
-                        } placeholder: { Color.gray }
+                        } placeholder: {
+                            Color.gray
+                        }
+                        .frame(width: 80, height: 80)
                         Text(p.name)
                     }
                 }
