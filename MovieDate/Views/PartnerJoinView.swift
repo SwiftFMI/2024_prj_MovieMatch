@@ -26,7 +26,7 @@ struct PartnerJoinView: View {
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .padding()
-                    .background(.white.opacity(0.7))
+                    .background(AppTextFieldBackground())
                     .cornerRadius(10)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 10)
