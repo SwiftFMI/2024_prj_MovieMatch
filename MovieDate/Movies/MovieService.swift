@@ -79,6 +79,10 @@ class MovieService {
         ]
         return try await fetch(as: MovieDetails.self, "/3/movie/\(id)", query: query)
     }
+    
+    func getMovieProviders(id: Int) async throws -> MovieWatchProviders {
+        return try await fetch(as: MovieWatchProviders.self, "/3/movie/\(id)/watch/providers")
+    }
 
     func getGenres() async throws -> [Genre] {
         return try await fetch(as: GenreResponse.self, "/3/genre/movie/list").genres

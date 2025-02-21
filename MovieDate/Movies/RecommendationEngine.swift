@@ -40,10 +40,10 @@ class RecommendationEngine {
         self.movieSvc = movieSvc
         self.providers = [
             (25, self.fromMatches),
-            (25, self.fromOwnLikes),
-            (25, self.fromPartnerLikes),
-            (20, self.fromSelected),
-            (10, self.fromPopular),
+            (10, self.fromOwnLikes),
+            (50, self.fromPartnerLikes),
+            (10, self.fromSelected),
+            ( 5, self.fromPopular),
         ]
     }
 
@@ -78,6 +78,7 @@ class RecommendationEngine {
     }
 
 
+
     private func fromMatches(ctx: UserContext) async -> Recommendation? {
         guard let matchId = ctx.matched.randomElement() else { return nil }
         guard let id = await fromRelated(ctx: ctx, id: matchId) else { return nil }
@@ -87,7 +88,7 @@ class RecommendationEngine {
     private func fromOwnLikes(ctx: UserContext) async -> Recommendation? {
         guard let likeId = ctx.liked.randomElement() else { return nil }
         guard let id = await fromRelated(ctx: ctx, id: likeId) else { return nil }
-        return Recommendation(id, .fromOwnLike(id: id))
+        return Recommendation(id, .fromOwnLike(id: likeId))
     }
 
     private func fromPartnerLikes(ctx: UserContext) -> Recommendation? {
@@ -119,9 +120,12 @@ class RecommendationEngine {
         return Recommendation(id, .fromPopular)
     }
 
+
+
     private func fromRelated(ctx: UserContext, id: Int) async -> Int? {
         return await fromQuery(ctx: ctx, attempts: 2, maxPage: 4) { page in
-            try await movieSvc.getRecommendation(id: id, page: page)
+            let res = try await movieSvc.getRecommendation(id: id, page: page)
+            return try await filterByProvider(res, ctx: ctx)
         }
     }
 
@@ -143,6 +147,23 @@ class RecommendationEngine {
             page = Int.random(in: 1...max(min(res.total_pages, maxPage), 1))
         }
         return nil
+    }
+
+    private func filterByProvider(_ r: MovieResponse, ctx: UserContext) async throws -> MovieResponse {
+        let userProviders = Set(ctx.user.selectedProviders)
+        guard !userProviders.isEmpty else { return r }
+        var filteredResults: [Movie] = []
+        for movie in r.results {
+            guard isAvailabe(ctx, id: movie.id) else { continue }
+            let movieProviders = try await movieSvc.getMovieProviders(id: movie.id)
+                .local?.allUnique.map{mp in mp.id} ?? []
+            if !userProviders.isDisjoint(with: movieProviders) {
+                filteredResults.append(movie)
+            }
+        }
+        return MovieResponse(total_pages: r.total_pages,
+                             total_results: r.total_results,
+                             results: filteredResults)
     }
 
     private func isAvailabe(_ ctx: UserContext, id: Int) -> Bool {
