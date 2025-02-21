@@ -42,7 +42,7 @@ struct SettingsView: View {
                             .frame(maxWidth: .infinity)
                             .padding(5)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.bordered)
                 }
             }
 
