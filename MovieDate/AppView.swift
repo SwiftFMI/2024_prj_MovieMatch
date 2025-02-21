@@ -29,6 +29,7 @@ struct AppView: View {
             } else {
                 NavigationStack {
                     HomeView()
+                        .preferredColorScheme(.dark)
                 }
             }
         } else {

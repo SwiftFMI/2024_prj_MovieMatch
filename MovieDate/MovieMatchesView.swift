@@ -14,10 +14,6 @@ struct MovieMatchesView: View {
         ZStack {
             Style.appGradient
             VStack {
-                Text("Matched")
-                    .font(.title)
-                    .bold()
-
                 ScrollView {
                     ForEach(userLikesSvc.userMatches, id: \.movieId) { m in
                         MovieView(id: m.movieId)
@@ -26,7 +22,7 @@ struct MovieMatchesView: View {
             }
             .padding()
         }
-        .colorScheme(.dark)
+        .navigationTitle("Matches")
     }
 }
 

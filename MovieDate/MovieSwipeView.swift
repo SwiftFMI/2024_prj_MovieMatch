@@ -75,10 +75,18 @@ fileprivate struct MovieDetailsView: View {
                 .padding(.vertical)
 
             HStack {
+                Text("Rating")
+                    .font(.title3)
+                    .bold()
+                Text("\(String(format: "%.1f", movie.vote_average))/10")
+                    .font(.body)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            HStack {
                 Text("Released")
                     .font(.title3)
                     .bold()
-                    .padding(.vertical)
                 Text(movie.release_date)
                     .font(.body)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -90,7 +98,16 @@ fileprivate struct MovieDetailsView: View {
                     .font(.title3)
                     .bold()
                     .frame(maxWidth: .infinity, alignment: .leading)
-                CastView(cast: movie.credits.cast)
+                PeopleView(people: movie.credits.cast)
+            }
+            
+            VStack {
+                Text("Crew")
+                    .padding(.vertical)
+                    .font(.title3)
+                    .bold()
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                PeopleView(people: movie.credits.crewSelection)
             }
 
             VStack {
@@ -104,18 +121,17 @@ fileprivate struct MovieDetailsView: View {
         }
         .padding()
         .background(Color.black.opacity(0.8))
-        .colorScheme(.dark)
         .cornerRadius(20)
     }
 }
 
-fileprivate struct CastView: View {
-    let cast: [Person]
+fileprivate struct PeopleView: View {
+    let people: [Person]
     
     var body: some View {
         ScrollView(.horizontal) {
             HStack(alignment: .top) {
-                ForEach(cast.prefix(10)) { p in
+                ForEach(people.prefix(10)) { p in
                     VStack {
                         AsyncImage(url: p.profileUrl) { image in
                             image
@@ -128,6 +144,11 @@ fileprivate struct CastView: View {
                         .clipShape(Circle())
                         Text(p.name)
                             .multilineTextAlignment(.center)
+                        if let job = p.job {
+                            Text(job)
+                                .foregroundStyle(.gray)
+                                .multilineTextAlignment(.center)
+                        }
                     }
                     .frame(width: 100)
                     .padding(.horizontal, 5)

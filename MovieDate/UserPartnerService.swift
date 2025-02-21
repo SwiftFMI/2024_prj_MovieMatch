@@ -53,10 +53,10 @@ class UserPartnerService: ObservableObject, UserChangeListener {
         }
     }
 
-    func setPartner(uid: String) {
+    func setPartner(uid: String?) {
         guard let user else { return }
         AppFirestore.userDocument(user.uid)
-            .updateData([User.CodingKeys.partner.stringValue: uid])
+            .updateData([User.CodingKeys.partner.stringValue: uid ?? FieldValue.delete()])
     }
 
     func trySetPartner(name: String) async {

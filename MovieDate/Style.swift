@@ -17,4 +17,8 @@ struct Style {
             endRadius: 800)
         .ignoresSafeArea()
     }
+
+    static func bgTextField(_ colorScheme: ColorScheme) -> Color  {
+        colorScheme == .light ? .white.opacity(0.7) : .white.opacity(0.2)
+    }
 }

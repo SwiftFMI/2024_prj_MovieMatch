@@ -21,6 +21,8 @@ struct MovieDetails: Codable, Identifiable {
     let poster_path: String?
     let overview: String
     let release_date: String
+    let vote_average: Double
+    let vote_count: Int
     let genres: [Genre]
     let credits: MovieCredits
     let providers: MovieWatchProviders
@@ -31,6 +33,8 @@ struct MovieDetails: Codable, Identifiable {
         case poster_path
         case overview
         case release_date
+        case vote_average
+        case vote_count
         case genres
         case credits
         case providers = "watch/providers"
@@ -43,6 +47,16 @@ struct MovieDetails: Codable, Identifiable {
 struct MovieCredits: Codable {
     let cast: [Person]
     let crew: [Person]
+    
+    var crewSelection: [Person] {
+        ["Director", "Writer"]
+            .flatMap({ j in crew.filter({ $0.job == j }) })
+            .reduce(into: [], { res, curr in
+                if !res.contains(where: { p in p.id == curr.id }) {
+                    res.append(curr)
+                }
+            })
+    }
 }
 
 struct MovieWatchProviders: Codable {
@@ -70,6 +84,7 @@ struct Person: Identifiable, Codable {
     let name: String
     let popularity: Double
     let profile_path: String?
+    let job: String?
 
     var profileUrl: URL? {
         imageUrl(size: "w185", path: profile_path)

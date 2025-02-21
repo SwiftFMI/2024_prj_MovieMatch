@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct SignUpView: View {
+    @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject private var authSvc: AuthService
     @EnvironmentObject private var userSvc: UserService
     @State private var name: String = "";
@@ -36,7 +37,7 @@ struct SignUpView: View {
                 
                 TextField("Name", text: $name)
                     .padding()
-                    .background(.white.opacity(0.7))
+                    .background(Style.bgTextField(colorScheme))
                     .cornerRadius(10)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 10)
@@ -45,7 +46,7 @@ struct SignUpView: View {
                     .textInputAutocapitalization(.never)
                     .disableAutocorrection(true)
                     .padding()
-                    .background(.white.opacity(0.7))
+                    .background(Style.bgTextField(colorScheme))
                     .cornerRadius(10)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 10)
@@ -54,7 +55,7 @@ struct SignUpView: View {
                     .submitLabel(.go)
                     .onSubmit(signUp)
                     .padding()
-                    .background(.white.opacity(0.7))
+                    .background(Style.bgTextField(colorScheme))
                     .cornerRadius(10)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 10)

@@ -19,6 +19,7 @@ struct MovieMatchView: View {
                 Text("🎉")
                     .font(.largeTitle.bold())
                 Text("It's a Match!")
+                    .multilineTextAlignment(.center)
                     .font(.largeTitle.bold())
                     .padding(10)
 
@@ -58,6 +59,5 @@ struct MovieMatchView: View {
             }
             .padding(40)
         }
-        .colorScheme(.dark)
     }
 }

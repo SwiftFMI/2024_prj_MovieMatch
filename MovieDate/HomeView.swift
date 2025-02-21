@@ -12,6 +12,7 @@ struct HomeView: View {
     @EnvironmentObject private var userLikesSvc: UserLikesService
     @StateObject private var movieQueue = MovieQueue()
     @StateObject private var movieMatch = MovieMatchState()
+    @State private var settingsShow: Bool = false
 
     var body: some View {
         ZStack {
@@ -19,7 +20,7 @@ struct HomeView: View {
 
             VStack {
                 HStack {
-                    NavigationLink(destination: SettingsView()){
+                    Button(action: { settingsShow = true }){
                         Image(systemName: "person.circle")
                             .resizable()
                             .frame(width: 30, height: 30)
@@ -62,7 +63,6 @@ struct HomeView: View {
             }
             .padding(.horizontal, 20)
         }
-        .colorScheme(.dark)
         .onAppear {
             movieQueue.fill(userSvc: userSvc, userLikesSvc: userLikesSvc)
         }
@@ -71,6 +71,11 @@ struct HomeView: View {
         }
         .sheet(isPresented: movieMatch.show) {
             MovieMatchView(movie: $movieMatch.movie)
+        }
+        .sheet(isPresented: $settingsShow) {
+            NavigationView {
+                SettingsView(isPresented: $settingsShow)
+            }
         }
     }
 
