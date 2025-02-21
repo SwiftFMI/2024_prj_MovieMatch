@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct MovieMatchesView: View {
+    @Binding var isPresented: Bool
     @EnvironmentObject var userLikesSvc: UserLikesService
 
     var body: some View {
@@ -21,6 +22,14 @@ struct MovieMatchesView: View {
             }
         }
         .navigationTitle("Matches")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: { isPresented = false }) {
+                    Text("Done")
+                }
+            }
+        }
     }
 }
 
@@ -86,7 +95,7 @@ fileprivate struct MovieDetailsView: View {
 
 #Preview {
     NavigationStack {
-        MovieMatchesView()
+        MovieMatchesView(isPresented: .constant(true))
             .environmentObject(PreviewCompose.userLikesSvc)
     }
 }

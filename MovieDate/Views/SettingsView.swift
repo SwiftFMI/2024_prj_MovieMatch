@@ -28,7 +28,7 @@ struct SettingsView: View {
                     }
                 }
             }
-            
+
             Section(header: Text("Personalize")) {
                 VStack(alignment: .leading) {
                     Text("Personalize your experience again.")
@@ -69,20 +69,27 @@ struct SettingsView: View {
                     }
                 }
             }
-            
+
             Section(header: Text("Actions")) {
-                Button(action: {
-                    try? authSvc.signOut()
-                }) {
-                    Text("Sign Out")
-                        .frame(maxWidth: .infinity)
-                        .padding(5)
+                VStack(alignment: .leading) {
+                    Text("Sign out of your profile.")
+                        .foregroundColor(.gray)
+                        .font(.subheadline)
+
+                    Button(action: {
+                        try? authSvc.signOut()
+                    }) {
+                        Text("Sign Out")
+                            .frame(maxWidth: .infinity)
+                            .padding(5)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.red)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.red)
             }
         }
         .navigationTitle("Settings")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(action: { isPresented = false }) {

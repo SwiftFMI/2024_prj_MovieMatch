@@ -12,7 +12,9 @@ struct HomeView: View {
     @EnvironmentObject private var userLikesSvc: UserLikesService
     @StateObject private var movieQueue = MovieQueue()
     @StateObject private var movieMatch = MovieMatchState()
-    @State private var settingsShow: Bool = false
+
+    @State private var settingsPresented: Bool = false
+    @State private var matchesPresented: Bool = false
 
     var body: some View {
         ZStack {
@@ -20,7 +22,7 @@ struct HomeView: View {
 
             VStack {
                 HStack {
-                    Button(action: { settingsShow = true }){
+                    Button(action: { settingsPresented = true }) {
                         Image(systemName: "person.circle")
                             .resizable()
                             .frame(width: 30, height: 30)
@@ -31,7 +33,7 @@ struct HomeView: View {
                         .scaledToFit()
                         .frame(height: 60)
                     Spacer()
-                    NavigationLink(destination: MovieMatchesView()){
+                    Button(action: { matchesPresented = true }) {
                         Image(systemName: "heart.circle")
                             .resizable()
                             .frame(width: 30, height: 30)
@@ -69,13 +71,18 @@ struct HomeView: View {
         .onChange(of: userLikesSvc.userMatches.count) { old, new in
             movieMatch.onMatchCountChange(old: old, new: new, latest: userLikesSvc.userMatches.first)
         }
+        .sheet(isPresented: $settingsPresented) {
+            NavigationView {
+                SettingsView(isPresented: $settingsPresented)
+            }
+        }
+        .sheet(isPresented: $matchesPresented) {
+            NavigationView {
+                MovieMatchesView(isPresented: $matchesPresented)
+            }
+        }
         .sheet(isPresented: movieMatch.show) {
             MovieMatchView(movie: $movieMatch.movie)
-        }
-        .sheet(isPresented: $settingsShow) {
-            NavigationView {
-                SettingsView(isPresented: $settingsShow)
-            }
         }
     }
 
