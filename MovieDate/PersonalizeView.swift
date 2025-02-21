@@ -14,7 +14,7 @@ struct PersonalizeView: View {
     
     var body: some View {
         ZStack {
-            Style.appGradient
+            AppGradient()
             
             VStack{
                 PersonalizeMovieGridView(movies: movies)

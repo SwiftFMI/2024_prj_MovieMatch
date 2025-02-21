@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct Style {
-    static var appGradient: some View {
+struct AppGradient: View {
+    var body: some View {
         RadialGradient(
             gradient: Gradient(colors: [Color(red: 0, green: 0, blue: 0.5),
                                         Color(red: 0.5, green: 0, blue: 0)]),
@@ -17,8 +17,12 @@ struct Style {
             endRadius: 800)
         .ignoresSafeArea()
     }
+}
 
-    static func bgTextField(_ colorScheme: ColorScheme) -> Color  {
-        colorScheme == .light ? .white.opacity(0.7) : .white.opacity(0.2)
+struct AppTextFieldBackground: View {
+    @Environment(\.colorScheme) var colorScheme
+    var body: some View {
+        colorScheme == .light ? Color.white.opacity(0.7) : Color.white.opacity(0.2)
     }
 }
+

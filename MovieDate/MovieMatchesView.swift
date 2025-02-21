@@ -12,15 +12,13 @@ struct MovieMatchesView: View {
 
     var body: some View {
         ZStack {
-            Style.appGradient
             VStack {
-                ScrollView {
+                List {
                     ForEach(userLikesSvc.userMatches, id: \.movieId) { m in
                         MovieView(id: m.movieId)
                     }
                 }
             }
-            .padding()
         }
         .navigationTitle("Matches")
     }
@@ -34,35 +32,55 @@ fileprivate struct MovieView: View {
     var body: some View {
         HStack {
             if let movie {
-                HStack {
-                    if let posterURL = movie.posterURL {
-                        AsyncImage(url: posterURL) { image in
-                            image.resizable()
-                        } placeholder: {
-                            Color.gray
+                NavigationLink(destination: MovieDetailsView(movie: movie)) {
+                    HStack {
+                        if let posterURL = movie.posterURL {
+                            AsyncImage(url: posterURL) { image in
+                                image.resizable()
+                            } placeholder: {
+                                Color.gray
+                            }
+                            .frame(width: 80, height: 120)
+                            .cornerRadius(8)
                         }
-                        .frame(width: 80, height: 120)
-                        .cornerRadius(8)
+
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(movie.title)
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            Text(movie.year)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Text(movie.overview)
+                                .font(.caption)
+                                .lineLimit(3)
+                                .foregroundColor(.secondary)
+                        }
                     }
-                    
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text(movie.title)
-                            .font(.headline)
-                        Text(movie.year)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Text(movie.overview)
-                            .font(.caption)
-                            .lineLimit(3)
-                            .foregroundColor(.secondary)
-                    }
+                    .padding(.vertical, 5)
                 }
-                .padding(.vertical, 5)
             }
         }
         .task{
             movie = try? await movieSvc.getMovieDetails(id: id)
         }
+    }
+}
+
+fileprivate struct MovieDetailsView: View {
+    let movie: MovieDetails
+
+    var body: some View {
+        ScrollView {
+            VStack {
+                if let posterURL = movie.posterURL {
+                    MoviePosterView(posterURL: posterURL)
+                }
+                MovieContentView(movie: movie)
+            }
+            .padding()
+        }
+        .navigationTitle(movie.titleFull)
     }
 }
 

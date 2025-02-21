@@ -41,6 +41,7 @@ struct MovieDetails: Codable, Identifiable {
     }
 
     var year: String { String(release_date.prefix(4)) }
+    var titleFull: String { "\(title) (\(year))" }
     var posterURL: URL? { imageUrl(size: "w500", path: poster_path) }
 }
 
@@ -48,14 +49,13 @@ struct MovieCredits: Codable {
     let cast: [Person]
     let crew: [Person]
     
+    var castSelection: [Person] {
+        cast.unique()
+    }
     var crewSelection: [Person] {
         ["Director", "Writer"]
             .flatMap({ j in crew.filter({ $0.job == j }) })
-            .reduce(into: [], { res, curr in
-                if !res.contains(where: { p in p.id == curr.id }) {
-                    res.append(curr)
-                }
-            })
+            .unique()
     }
 }
 
@@ -68,14 +68,12 @@ struct MovieWatchProviderRegion: Codable {
     let buy: [WatchProvider]?
     let rent: [WatchProvider]?
     let flatrate: [WatchProvider]?
-    
+
     var allUnique: [WatchProvider] {
         [buy, rent, flatrate]
             .compactMap{ $0 }
             .flatMap{ $0 }
-            .reduce(into: []) { arr, p in
-                arr.contains(where: { $0.id == p.id }) ? () : arr.append(p)
-            }
+            .unique()
     }
 }
 
@@ -140,4 +138,14 @@ struct WatchProvider: Codable, Identifiable {
 fileprivate func imageUrl(size: String, path: String?) -> URL? {
     guard let path else { return nil }
     return URL(string: "https://image.tmdb.org/t/p/\(size)\(path)")
+}
+
+fileprivate extension Sequence where Element: Identifiable {
+    func unique() -> [Element] {
+        return reduce(into: [], { res, curr in
+            if !res.contains(where: { p in p.id == curr.id }) {
+                res.append(curr)
+            }
+        })
+    }
 }

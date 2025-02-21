@@ -31,10 +31,10 @@ struct SettingsView: View {
             
             Section(header: Text("Personalize")) {
                 VStack(alignment: .leading) {
-                    Text("Run the personalization setup again.")
+                    Text("Personalize your experience again.")
                         .foregroundColor(.gray)
                         .font(.subheadline)
-                    
+
                     Button(action: {
                         userSvc.setPersonalizeDone(value: false)
                     }) {
@@ -74,7 +74,7 @@ struct SettingsView: View {
                 Button(action: {
                     try? authSvc.signOut()
                 }) {
-                    Text("Logout")
+                    Text("Sign Out")
                         .frame(maxWidth: .infinity)
                         .padding(5)
                 }

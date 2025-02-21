@@ -16,7 +16,7 @@ struct HomeView: View {
 
     var body: some View {
         ZStack {
-            Style.appGradient
+            AppGradient()
 
             VStack {
                 HStack {

@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct SignInView: View {
-    @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject private var authSvc: AuthService
     @EnvironmentObject private var userSvc: UserService
     @State private var email: String = "";
@@ -27,7 +26,7 @@ struct SignInView: View {
 
     var body: some View {
         ZStack {
-            Style.appGradient
+            AppGradient()
             VStack {
                 Text("Login")
                     .font(.largeTitle)
@@ -42,9 +41,9 @@ struct SignInView: View {
                 TextField("Email", text: $email)
                     .submitLabel(.next)
                     .textInputAutocapitalization(.never)
-                    .disableAutocorrection(true)
+                    .autocorrectionDisabled()
                     .padding()
-                    .background(Style.bgTextField(colorScheme))
+                    .background(AppTextFieldBackground())
                     .cornerRadius(10)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 10)
@@ -53,7 +52,7 @@ struct SignInView: View {
                     .submitLabel(.go)
                     .onSubmit(signIn)
                     .padding()
-                    .background(Style.bgTextField(colorScheme))
+                    .background(AppTextFieldBackground())
                     .cornerRadius(10)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 10)

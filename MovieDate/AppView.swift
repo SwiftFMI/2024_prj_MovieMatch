@@ -14,7 +14,7 @@ struct AppView: View {
     var body: some View {
         if !(userSvc.loaded && userPartnerSvc.loaded) {
             ZStack {
-                Style.appGradient
+                AppGradient()
                 ProgressView().colorScheme(.dark)
             }
         } else if let user = userSvc.user {

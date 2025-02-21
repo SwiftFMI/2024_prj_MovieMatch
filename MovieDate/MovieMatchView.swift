@@ -13,7 +13,7 @@ struct MovieMatchView: View {
 
     var body: some View {
         ZStack {
-            Style.appGradient
+            AppGradient()
 
             VStack {
                 Text("🎉")
@@ -35,7 +35,7 @@ struct MovieMatchView: View {
                             }
                             .frame(maxWidth: .infinity)
                         }
-                        Text("\(movie.title) (\(movie.year))")
+                        Text(movie.titleFull)
                             .padding(.top, 10)
                             .font(.title2)
                             .bold()

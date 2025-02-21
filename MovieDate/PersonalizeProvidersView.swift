@@ -15,7 +15,7 @@ struct PersonalizeProvidersView: View {
 
     var body: some View {
         ZStack {
-            Style.appGradient
+            AppGradient()
             
             VStack {
                 ProgressView(value: 3.0/3)

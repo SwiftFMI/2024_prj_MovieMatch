@@ -15,7 +15,7 @@ struct PartnerJoinView: View {
 
     var body: some View {
         ZStack {
-            Style.appGradient
+            AppGradient()
             VStack {
                 Text("Add Your Partner")
                     .font(.largeTitle)
@@ -23,6 +23,7 @@ struct PartnerJoinView: View {
                     .fontWeight(.bold)
                 
                 TextField("Partner Name", text: $name)
+                    .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .padding()
                     .background(.white.opacity(0.7))
